@@ -26,9 +26,6 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([provider, providerAccountId])
 }
 
@@ -47,6 +44,24 @@ enum CleaningDelay {
   DO_NOT_CLEAN
 }
 
+enum AuthProvidersEnum {
+  EMAIL
+  GOOGLE
+  GITHUB
+}
+
+model Session {
+  id                    String                 @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hash  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deletedAt DateTime?
+}
+
 model User {
   id                    String                 @id @default(cuid())
   name                  String?                @unique
@@ -55,7 +70,7 @@ model User {
   password              String?
   image                 String?                @db.Text
   bio                   String?                @db.Text
-  accounts              Account[]
+  provider              AuthProvidersEnum      @default(EMAIL)
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
   status                Statuses               @default(ONLINE)
@@ -64,6 +79,7 @@ model User {
   servers  Server[]
   members  Member[]
   channels Channel[]
+  sessions Session[]
 
   directMessages DirectMessage[]
 

@@ -1,10 +1,11 @@
 import { Controller, Post, Body, Request, UseGuards, Get, Param, Put, Inject, forwardRef } from '@nestjs/common';
-import { AuthService, AuthResponse } from '@/modules/auth/auth.service';
-import { UserService } from '@/modules/user/user.service';
-import { JwtAuthGuard } from '@/modules/auth/guard/jwt.guard';
-import { CreateUserDto, UpdateUserDto, UpdatePasswordDto } from './dto';
+import { AuthService } from '@/auth/auth.service';
+import { UserService } from '@/user/user.service';
+import { JwtAuthGuard } from '@/auth/guard/jwt.guard';
+import { UpdateUserDto, UpdatePasswordDto } from './dto';
 import { User } from '@prisma/client';
-import { LocalAuthGuard } from '@/modules/auth/guard/local.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiTags } from '@nestjs/swagger';
 
 interface RequestWithUser extends Request {
   user: {
@@ -14,7 +15,12 @@ interface RequestWithUser extends Request {
   };
 }
 
-@Controller('users')
+@UseGuards(AuthGuard('jwt'))
+@ApiTags('Users')
+@Controller({
+  path: 'users',
+  version: '1',
+})
 export class UsersController {
   constructor(
     @Inject(forwardRef(() => AuthService))
