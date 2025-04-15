@@ -26,6 +26,7 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
+
   @@unique([provider, providerAccountId])
 }
 
@@ -51,10 +52,10 @@ enum AuthProvidersEnum {
 }
 
 model Session {
-  id                    String                 @id @default(cuid())
+  id     String @id @default(cuid())
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hash  String
+  hash   String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -65,7 +66,7 @@ model Session {
 model User {
   id                    String                 @id @default(cuid())
   name                  String?                @unique
-  email                 String                @unique
+  email                 String                 @unique
   emailVerified         DateTime?
   password              String?
   image                 String?                @db.Text
@@ -75,18 +76,18 @@ model User {
   twoFactorConfirmation TwoFactorConfirmation?
   status                Statuses               @default(ONLINE)
   cleaningDelay         CleaningDelay          @default(DO_NOT_CLEAN)
-
-  servers  Server[]
-  members  Member[]
-  channels Channel[]
-  sessions Session[]
+  socialId              String?
+  servers               Server[]
+  members               Member[]
+  channels              Channel[]
+  sessions              Session[]
 
   directMessages DirectMessage[]
 
   conversationsInitiated Conversation[] @relation("UserOne")
   conversationsReceived  Conversation[] @relation("UserTwo")
 
-  hiddenConversationsBy HiddenConversation[] @relation("HiddenBy")
+  hiddenConversationsBy    HiddenConversation[] @relation("HiddenBy")
   hiddenConversationsUsers HiddenConversation[] @relation("HiddenUser")
 
   friendsInitiated Friend[] @relation("FriendOne")
@@ -168,7 +169,7 @@ model Member {
   serverId String
   server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
 
-  messages       Message[]
+  messages Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -228,12 +229,12 @@ model Conversation {
   id String @id @default(uuid())
 
   userOneId String
-  userOne   User @relation("UserOne", fields: [userOneId], references: [id], onDelete: Cascade)
+  userOne   User   @relation("UserOne", fields: [userOneId], references: [id], onDelete: Cascade)
 
   userTwoId String
-  userTwo   User @relation("UserTwo", fields: [userTwoId], references: [id], onDelete: Cascade)
+  userTwo   User   @relation("UserTwo", fields: [userTwoId], references: [id], onDelete: Cascade)
 
-  directMessages DirectMessage[]
+  directMessages      DirectMessage[]
   hiddenConversations HiddenConversation[]
 
   @@unique([userOneId, userTwoId])
@@ -247,10 +248,10 @@ model HiddenConversation {
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   userId String
-  user User @relation("HiddenBy", fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation("HiddenBy", fields: [userId], references: [id], onDelete: Cascade)
 
   hiddenUserId String
-  hiddenUser   User @relation("HiddenUser", fields: [hiddenUserId], references: [id], onDelete: Cascade)
+  hiddenUser   User   @relation("HiddenUser", fields: [hiddenUserId], references: [id], onDelete: Cascade)
 
   isActive Boolean
 }
@@ -261,7 +262,7 @@ model DirectMessage {
   fileUrl String? @db.Text
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

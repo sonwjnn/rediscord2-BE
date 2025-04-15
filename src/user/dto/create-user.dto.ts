@@ -1,14 +1,25 @@
-import { IsEmail, IsString,  MinLength } from 'class-validator';
+import { lowerCaseTransformer } from '@/utils/transformers/lower-case.transformer'
+import { ApiProperty } from '@nestjs/swagger'
+import { AuthProvidersEnum } from '@prisma/client'
+import { Transform } from 'class-transformer'
+import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
 
 export class CreateUserDto {
-  @IsEmail({}, { message: 'Please provide a valid email address' })
-  email: string;
+  @ApiProperty({ example: 'test1@example.com', type: String })
+  @Transform(lowerCaseTransformer)
+  @IsNotEmpty()
+  @IsEmail()
+  email: string | null
 
-  @IsString()
-  @MinLength(6, { message: 'Password must be at least 6 characters long' })
-  password: string;
+  @ApiProperty()
+  @MinLength(6)
+  password?: string
 
-  @IsString()
-  @MinLength(5, { message: 'Username must be at least 6 characters long' })
-  name: string;
-} 
+  provider?: AuthProvidersEnum
+
+  socialId?: string | null
+
+  @ApiProperty({ example: 'sonwin111', type: String })
+  @IsNotEmpty()
+  name: string | null
+}

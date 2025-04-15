@@ -1,16 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { User } from '@prisma/client';
+import { DomainUser } from '@/user/domain/user'
+import { ApiProperty } from '@nestjs/swagger'
 
 export class LoginResponseDto {
   @ApiProperty()
-  token: string;
+  token: string
 
   @ApiProperty()
-  refreshToken: string;
+  refreshToken: string
 
   @ApiProperty()
-  tokenExpires: number;
-
-  @ApiProperty()
-  user: User;
+  tokenExpires: number
 }

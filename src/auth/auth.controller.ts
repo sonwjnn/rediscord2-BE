@@ -1,10 +1,17 @@
-import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { Public } from './decorator/public.decorator';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { LoginResponseDto } from './dto/login-response.dto';
-import { AuthLoginDto } from './dto/auth-login.dto';
-import { AuthRegisterLoginDto } from './dto/auth-register.dto';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common'
+import { AuthService } from './auth.service'
+import { Public } from './decorator/public.decorator'
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger'
+import { LoginResponseDto } from './dto/login-response.dto'
+import { AuthEmailLoginDto } from './dto/auth-email-login.dto'
+import { AuthEmailRegisterDto } from './dto/auth-email-register.dto'
 
 @ApiTags('Auth')
 @Controller({
@@ -20,14 +27,14 @@ export class AuthController {
     type: LoginResponseDto,
   })
   @HttpCode(HttpStatus.OK)
-  public login(@Body() loginDto: AuthLoginDto): Promise<LoginResponseDto> {
-    return this.authService.validateLogin(loginDto);
+  public login(@Body() loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
+    return this.authService.validateLoginByUsernameOrEmail(loginDto)
   }
 
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async register(@Body() createUserDto: AuthRegisterLoginDto):Promise<void> {
-    return this.authService.register(createUserDto);
+  async register(@Body() createUserDto: AuthEmailRegisterDto): Promise<void> {
+    return this.authService.register(createUserDto)
   }
 }

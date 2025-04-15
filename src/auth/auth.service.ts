@@ -1,20 +1,25 @@
 import * as ms from 'ms'
-import * as crypto from 'crypto';
-import * as bcrypt from 'bcryptjs';
-import { Injectable, Inject, forwardRef, UnprocessableEntityException, HttpStatus } from "@nestjs/common";
-import { JwtService } from '@nestjs/jwt';
-import { UserService } from '@/user/user.service';
-import { verifyPassword } from '@/helpers/password';
-import { PrismaService } from "@/prisma";
-import { v4 as uuidv4 } from 'uuid';
-import { AuthLoginDto } from "./dto/auth-login.dto";
-import { LoginResponseDto } from "./dto/login-response.dto";
-import { AuthProvidersEnum, Session, User } from "@prisma/client";
-import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
-import { SessionService } from "@/session/session.service";
-import { ConfigService } from "@nestjs/config";
-import { AllConfigType } from "@/config/config.type";
-import { AuthRegisterLoginDto } from "./dto/auth-register.dto";
+import * as crypto from 'crypto'
+import * as bcrypt from 'bcryptjs'
+import {
+  Injectable,
+  Inject,
+  forwardRef,
+  UnprocessableEntityException,
+  HttpStatus,
+} from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
+import { UserService } from '@/user/user.service'
+import { verifyPassword } from '@/helpers/password'
+import { PrismaService } from '@/prisma'
+import { AuthEmailLoginDto } from './dto/auth-email-login.dto'
+import { LoginResponseDto } from './dto/login-response.dto'
+import { AuthProvidersEnum, Session, User } from '@prisma/client'
+import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util'
+import { SessionService } from '@/session/session.service'
+import { ConfigService } from '@nestjs/config'
+import { AllConfigType } from '@/config/config.type'
+import { AuthEmailRegisterDto } from './dto/auth-email-register.dto'
 
 @Injectable()
 export class AuthService {
@@ -28,28 +33,32 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userService.findByEmail(email);
+    const user = await this.userService.findByEmail(email)
     if (user && user.password) {
-      const isValid = await verifyPassword(password, user.password);
+      const isValid = await verifyPassword(password, user.password)
       if (isValid) {
-        const { password, ...result } = user;
-        return result;
+        const { password, ...result } = user
+        return result
       }
     }
-    return null;
+    return null
   }
 
   async validateUserById(id: string): Promise<any> {
-    const user = await this.userService.findById(id);
+    const user = await this.userService.findById(id)
     if (user) {
-      const { password, ...result } = user;
-      return result;
+      const { password, ...result } = user
+      return result
     }
-    return null;
+    return null
   }
 
-  async validateLogin(loginDto: AuthLoginDto): Promise<LoginResponseDto> {
-    const user = await this.userService.findByEmail(loginDto.email);
+  async validateLoginByUsernameOrEmail(
+    loginDto: AuthEmailLoginDto,
+  ): Promise<LoginResponseDto> {
+    const user = await this.userService.findByUsernameOrEmail(
+      loginDto.usernameOrEmail,
+    )
 
     if (!user) {
       throw new UnprocessableEntityException({
@@ -57,7 +66,7 @@ export class AuthService {
         errors: {
           email: 'notFound',
         },
-      });
+      })
     }
 
     if (user.provider !== AuthProvidersEnum.EMAIL) {
@@ -66,7 +75,7 @@ export class AuthService {
         errors: {
           email: `needLoginViaProvider:${user.provider}`,
         },
-      });
+      })
     }
 
     if (!user.password) {
@@ -75,13 +84,13 @@ export class AuthService {
         errors: {
           password: 'incorrectPassword',
         },
-      });
+      })
     }
 
     const isValidPassword = await bcrypt.compare(
       loginDto.password,
       user.password,
-    );
+    )
 
     if (!isValidPassword) {
       throw new UnprocessableEntityException({
@@ -89,38 +98,37 @@ export class AuthService {
         errors: {
           password: 'incorrectPassword',
         },
-      });
+      })
     }
 
     const hash = crypto
       .createHash('sha256')
       .update(randomStringGenerator())
-      .digest('hex');
+      .digest('hex')
 
     const session = await this.sessionService.create({
       userId: user.id,
       hash,
-    });
+    })
 
     const { token, refreshToken, tokenExpires } = await this.getTokensData({
       id: user.id,
       sessionId: session.id,
       hash,
-    });
+    })
 
     return {
       refreshToken,
       token,
       tokenExpires,
-      user,
-    };
+    }
   }
 
-  async register(dto: AuthRegisterLoginDto): Promise<void> {
-    const user = await this.userService.create({
+  async register(dto: AuthEmailRegisterDto): Promise<void> {
+    await this.userService.create({
       ...dto,
       email: dto.email,
-    });
+    })
 
     // const hash = await this.jwtService.signAsync(
     //   {
@@ -145,15 +153,15 @@ export class AuthService {
   }
 
   private async getTokensData(data: {
-    id: User['id'];
-    sessionId: Session['id'];
-    hash: Session['hash'];
+    id: User['id']
+    sessionId: Session['id']
+    hash: Session['hash']
   }) {
     const tokenExpiresIn = this.configService.getOrThrow('auth.expires', {
       infer: true,
-    });
+    })
 
-    const tokenExpires = Date.now() + ms(tokenExpiresIn);
+    const tokenExpires = Date.now() + ms(tokenExpiresIn)
 
     const [token, refreshToken] = await Promise.all([
       await this.jwtService.signAsync(
@@ -180,27 +188,12 @@ export class AuthService {
           }),
         },
       ),
-    ]);
+    ])
 
     return {
       token,
       refreshToken,
       tokenExpires,
-    };
-  }
-
-  async signToken(
-    userId: string,
-  ) {
-    const payload = {
-      sub: userId,
-      version: uuidv4()
-    };
-
-    const token = await this.jwtService.signAsync(
-      payload,
-    );
-
-    return token
+    }
   }
 }
