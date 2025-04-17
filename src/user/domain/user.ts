@@ -16,6 +16,18 @@ export class DomainUser {
 
   @ApiProperty({
     type: String,
+    example: 'John',
+  })
+  firstName: string | null
+
+  @ApiProperty({
+    type: String,
+    example: 'Doe',
+  })
+  lastName: string | null
+
+  @ApiProperty({
+    type: String,
     example: 'john.doe@example.com',
   })
   @Expose({ groups: ['me', 'admin'] })

@@ -1,28 +1,36 @@
-import { IsEmail, IsString, IsOptional, IsEnum } from 'class-validator';
-import { Statuses, CleaningDelay } from '@prisma/client';
+import { IsDate, IsString, IsOptional, IsEnum } from 'class-validator'
+import { Statuses, CleaningDelay } from '@prisma/client'
 
 export class UpdateUserDto {
-  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsString()
   @IsOptional()
-  email?: string;
+  firstName?: string | null
 
   @IsString()
   @IsOptional()
-  name?: string;
+  lastName?: string | null
 
   @IsString()
   @IsOptional()
-  image?: string;
+  image?: string | null
 
   @IsString()
   @IsOptional()
-  bio?: string;
+  bio?: string | null
+
+  @IsDate()
+  @IsOptional()
+  emailVerified?: Date | null
 
   @IsEnum(Statuses, { message: 'Invalid status' })
   @IsOptional()
-  status?: Statuses;
+  status?: Statuses
 
   @IsEnum(CleaningDelay, { message: 'Invalid cleaning delay' })
   @IsOptional()
-  cleaningDelay?: CleaningDelay;
-} 
+  cleaningDelay?: CleaningDelay
+
+  @IsString()
+  @IsOptional()
+  password?: string | null
+}

@@ -1,4 +1,3 @@
-import { hashPassword, verifyPassword } from '@/helpers/password'
 import {
   Injectable,
   ConflictException,
@@ -8,9 +7,15 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import { PrismaService } from '@/prisma/prisma.service'
-import { AuthProvidersEnum, User } from '@prisma/client'
+import {
+  AuthProvidersEnum,
+  CleaningDelay,
+  Statuses,
+  User,
+} from '@prisma/client'
 import { CreateUserDto, UpdateUserDto, UpdatePasswordDto } from './dto'
 import * as bcrypt from 'bcryptjs'
+import { NullableType } from '@/utils/types/nullable.type'
 
 @Injectable()
 export class UserService {
@@ -76,15 +81,14 @@ export class UserService {
     })
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    const user = await this.db.user.findUnique({
+  findByEmail(email: string): Promise<NullableType<User>> {
+    return this.db.user.findUnique({
       where: { email },
     })
-    return user
   }
 
-  async findByUsernameOrEmail(usernameOrEmail: string): Promise<User | null> {
-    const user = await this.db.user.findFirst({
+  findByUsernameOrEmail(usernameOrEmail: string): Promise<NullableType<User>> {
+    return this.db.user.findFirst({
       where: {
         OR: [
           {
@@ -96,109 +100,111 @@ export class UserService {
         ],
       },
     })
-    return user
   }
 
-  async findById(id: string): Promise<User | null> {
-    const user = await this.db.user.findUnique({
+  findById(id: User['id']): Promise<NullableType<User>> {
+    return this.db.user.findUnique({
       where: { id },
     })
-    return user
   }
 
-  async findByName(name: string): Promise<User | null> {
-    const user = await this.db.user.findUnique({
+  findByIds(ids: User['id'][]): Promise<User[]> {
+    return this.db.user.findMany({
+      where: { id: { in: ids } },
+    })
+  }
+
+  findByName(name: string): Promise<NullableType<User>> {
+    return this.db.user.findUnique({
       where: { name },
     })
-    return user
   }
 
   async update(
-    id: string,
+    id: User['id'],
     updateUserDto: UpdateUserDto,
-  ): Promise<Partial<User>> {
-    const updatedUser = await this.db.user.update({
+  ): Promise<User | null> {
+    // Do not remove comment below.
+    // <updating-property />
+
+    let password: string | undefined = undefined
+
+    if (updateUserDto.password) {
+      const userObject = await this.findById(id)
+
+      if (userObject && userObject?.password !== updateUserDto.password) {
+        const salt = await bcrypt.genSalt()
+        password = await bcrypt.hash(updateUserDto.password, salt)
+      }
+    }
+
+    // let photo: FileType | null | undefined = undefined;
+
+    // if (updateUserDto.photo?.id) {
+    //   const fileObject = await this.filesService.findById(
+    //     updateUserDto.photo.id,
+    //   );
+    //   if (!fileObject) {
+    //     throw new UnprocessableEntityException({
+    //       status: HttpStatus.UNPROCESSABLE_ENTITY,
+    //       errors: {
+    //         photo: 'imageNotExists',
+    //       },
+    //     });
+    //   }
+    //   photo = fileObject;
+    // } else if (updateUserDto.photo === null) {
+    //   photo = null;
+    // }
+
+    let cleaningDelay: CleaningDelay | undefined = undefined
+
+    if (updateUserDto.cleaningDelay) {
+      const roleObject = Object.values(CleaningDelay)
+        .map(String)
+        .includes(String(updateUserDto.cleaningDelay))
+      if (!roleObject) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            role: 'roleNotExists',
+          },
+        })
+      }
+
+      cleaningDelay = updateUserDto.cleaningDelay
+    }
+
+    let status: Statuses | undefined = undefined
+
+    if (updateUserDto.status) {
+      const statusObject = Object.values(Statuses)
+        .map(String)
+        .includes(String(updateUserDto.status))
+      if (!statusObject) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            status: 'statusNotExists',
+          },
+        })
+      }
+
+      status = updateUserDto.status
+    }
+
+    return this.db.user.update({
       where: { id },
-      data: updateUserDto,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        image: true,
-        bio: true,
-        status: true,
-        cleaningDelay: true,
-        createdAt: true,
-        updatedAt: true,
-        // Exclude password and other sensitive fields
+      // Do not remove comment below.
+      // <updating-property-payload />
+      data: {
+        firstName: updateUserDto.firstName,
+        lastName: updateUserDto.lastName,
+        password: password,
+        image: updateUserDto.image,
+        emailVerified: updateUserDto.emailVerified,
+        status: status,
       },
     })
-    return updatedUser
-  }
-
-  async updatePassword(
-    id: string,
-    updatePasswordDto: UpdatePasswordDto,
-  ): Promise<Partial<User>> {
-    // Find the user
-    const user = await this.db.user.findUnique({
-      where: { id },
-    })
-
-    if (!user || !user.password) {
-      throw new NotFoundException('User not found')
-    }
-
-    // Verify current password
-    const isPasswordValid = await verifyPassword(
-      updatePasswordDto.currentPassword,
-      user.password,
-    )
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect')
-    }
-
-    // Hash the new password
-    const hashedPassword = await hashPassword(updatePasswordDto.newPassword)
-
-    // Update the password
-    const updatedUser = await this.db.user.update({
-      where: { id },
-      data: { password: hashedPassword },
-      select: {
-        id: true,
-        // Exclude password and other sensitive fields
-      },
-    })
-
-    return updatedUser
-  }
-
-  async delete(id: string): Promise<User> {
-    const deletedUser = await this.db.user.delete({
-      where: { id },
-    })
-    return deletedUser
-  }
-
-  async validateUser(
-    email: string,
-    password: string,
-  ): Promise<Partial<User> | null> {
-    const user = await this.findByEmail(email)
-
-    if (!user || !user.password) {
-      return null
-    }
-
-    const isPasswordValid = await verifyPassword(password, user.password)
-
-    if (!isPasswordValid) {
-      return null
-    }
-
-    const { password: _, ...result } = user
-    return result
   }
 }
