@@ -15,7 +15,7 @@ import { UserService } from '@/user/user.service'
 import { PrismaService } from '@/prisma'
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto'
 import { LoginResponseDto } from './dto/login-response.dto'
-import { AuthProvidersEnum, Session, User } from '@prisma/client'
+import { Session, User } from '@prisma/client'
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util'
 import { SessionService } from '@/session/session.service'
 import { ConfigService } from '@nestjs/config'
@@ -28,6 +28,7 @@ import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.ty
 import { MailService } from '@/mail/mail.service'
 import { v4 as uuidv4 } from 'uuid'
 import { compareAsc } from 'date-fns'
+import { SocialInterface } from '@/social/interfaces/social.interface'
 @Injectable()
 export class AuthService {
   constructor(
@@ -43,11 +44,11 @@ export class AuthService {
   async validateLoginByUsernameOrEmail(
     loginDto: AuthEmailLoginDto,
   ): Promise<LoginResponseDto> {
-    const user = await this.userService.findByUsernameOrEmail(
+    const exisingUser = await this.userService.findByUsernameOrEmail(
       loginDto.usernameOrEmail,
     )
 
-    if (!user) {
+    if (!exisingUser) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -56,20 +57,11 @@ export class AuthService {
       })
     }
 
-    if (user.provider !== AuthProvidersEnum.EMAIL) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          email: `needLoginViaProvider:${user.provider}`,
-        },
-      })
-    }
-
-    if (!user.emailVerified) {
-      const token = await this.generateVerificationToken(user.email)
+    if (!exisingUser.emailVerified) {
+      const token = await this.generateVerificationToken(exisingUser.email)
 
       await this.mailService.userSignUp({
-        to: user.email,
+        to: exisingUser.email,
         data: {
           token,
         },
@@ -83,7 +75,7 @@ export class AuthService {
       })
     }
 
-    if (!user.password) {
+    if (!exisingUser.password) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -94,7 +86,7 @@ export class AuthService {
 
     const isValidPassword = await bcrypt.compare(
       loginDto.password,
-      user.password,
+      exisingUser.password,
     )
 
     if (!isValidPassword) {
@@ -112,12 +104,12 @@ export class AuthService {
       .digest('hex')
 
     const session = await this.sessionService.create({
-      userId: user.id,
+      userId: exisingUser.id,
       hash,
     })
 
     const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: user.id,
+      id: exisingUser.id,
       sessionId: session.id,
       hash,
     })

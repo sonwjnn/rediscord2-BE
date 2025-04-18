@@ -1,12 +1,9 @@
 import {
   Controller,
-  Post,
-  Body,
   Request,
   UseGuards,
   Get,
   Param,
-  Put,
   Inject,
   forwardRef,
   SerializeOptions,
@@ -15,8 +12,6 @@ import {
 } from '@nestjs/common'
 import { AuthService } from '@/auth/auth.service'
 import { UserService } from '@/user/user.service'
-import { JwtAuthGuard } from '@/auth/guard/jwt.guard'
-import { UpdateUserDto, UpdatePasswordDto } from './dto'
 import { User } from '@prisma/client'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger'

@@ -2,7 +2,14 @@ import { lowerCaseTransformer } from '@/utils/transformers/lower-case.transforme
 import { ApiProperty } from '@nestjs/swagger'
 import { AuthProvidersEnum } from '@prisma/client'
 import { Transform } from 'class-transformer'
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
+import {
+  IsDate,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator'
 
 export class CreateUserDto {
   @ApiProperty({ example: 'test1@example.com', type: String })
@@ -19,7 +26,20 @@ export class CreateUserDto {
 
   socialId?: string | null
 
+  @IsString()
+  @IsOptional()
+  firstName?: string | null
+
+  @IsString()
+  @IsOptional()
+  lastName?: string | null
+
+  @IsDate()
+  @IsOptional()
+  emailVerified?: Date | null
+
   @ApiProperty({ example: 'sonwin111', type: String })
-  @IsNotEmpty()
-  name: string | null
+  @IsString()
+  @IsOptional()
+  name?: string | null
 }

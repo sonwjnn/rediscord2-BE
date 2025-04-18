@@ -11,7 +11,6 @@ import {
   Patch,
 } from '@nestjs/common'
 import { AuthService } from './auth.service'
-import { Public } from './decorator/public.decorator'
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger'
 import { LoginResponseDto } from './dto/login-response.dto'
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto'
@@ -34,7 +33,9 @@ import { AuthResetPasswordDto } from './dto/auth-reset-password.dto'
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Public()
+  @SerializeOptions({
+    groups: ['me'],
+  })
   @Post('login')
   @ApiOkResponse({
     type: LoginResponseDto,
@@ -44,7 +45,6 @@ export class AuthController {
     return this.authService.validateLoginByUsernameOrEmail(loginDto)
   }
 
-  @Public()
   @Post('register')
   @HttpCode(HttpStatus.NO_CONTENT)
   async register(@Body() createUserDto: AuthEmailRegisterDto): Promise<void> {
