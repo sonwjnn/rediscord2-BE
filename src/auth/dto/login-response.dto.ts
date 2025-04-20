@@ -1,9 +1,8 @@
-import { DomainUser } from '@/user/domain/user'
 import { ApiProperty } from '@nestjs/swagger'
 
 export class LoginResponseDto {
   @ApiProperty()
-  token: string
+  accessToken: string
 
   @ApiProperty()
   refreshToken: string

@@ -7,13 +7,19 @@ import {
   VersioningType,
 } from '@nestjs/common'
 import validationOptions from '@/utils/validation-options'
-import { ResolvePromisesInterceptor } from '@/utils/serializer.interceptor'
+import { ResolvePromisesInterceptor } from '@/middlewares/interceptors/serializer.interceptor'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { AllConfigType } from '@/config/config.type'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   const configService = app.get(ConfigService<AllConfigType>)
+
+  // Enable CORS
+  app.enableCors({
+    origin: [configService.getOrThrow('app.frontendDomain', { infer: true })],
+    credentials: true,
+  })
 
   app.useGlobalPipes(new ValidationPipe(validationOptions))
 

@@ -12,6 +12,7 @@ import mailConfig from './mail/config/mail.config'
 import { HeaderResolver, I18nModule } from 'nestjs-i18n'
 import { AllConfigType } from './config/config.type'
 import * as path from 'path'
+import { AccountModule } from './account/account.module'
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import * as path from 'path'
       imports: [ConfigModule],
       inject: [ConfigService],
     }),
+    AccountModule,
     AuthModule,
     UserModule,
     PrismaModule,

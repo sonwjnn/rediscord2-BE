@@ -1,4 +1,4 @@
-import * as ms from 'ms'
+import ms from 'ms'
 import * as crypto from 'crypto'
 import * as bcrypt from 'bcryptjs'
 import {
@@ -27,8 +27,6 @@ import { AuthUpdateDto } from './dto/auth-update.dto'
 import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type'
 import { MailService } from '@/mail/mail.service'
 import { v4 as uuidv4 } from 'uuid'
-import { compareAsc } from 'date-fns'
-import { SocialInterface } from '@/social/interfaces/social.interface'
 @Injectable()
 export class AuthService {
   constructor(
@@ -98,25 +96,30 @@ export class AuthService {
       })
     }
 
-    const hash = crypto
+    const sessionToken = crypto
       .createHash('sha256')
       .update(randomStringGenerator())
       .digest('hex')
 
+    const expires = new Date()
+    expires.setHours(expires.getHours() + 24) // Session expires in 24 hours
+
     const session = await this.sessionService.create({
       userId: exisingUser.id,
-      hash,
+      sessionToken,
+      expires,
     })
 
-    const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: exisingUser.id,
-      sessionId: session.id,
-      hash,
-    })
+    const { accessToken, refreshToken, tokenExpires } =
+      await this.getTokensData({
+        id: exisingUser.id,
+        sessionId: session.id,
+        sessionToken,
+      })
 
     return {
       refreshToken,
-      token,
+      accessToken,
       tokenExpires,
     }
   }
@@ -321,7 +324,7 @@ export class AuthService {
   }
 
   async refreshToken(
-    data: Pick<JwtRefreshPayloadType, 'sessionId' | 'hash'>,
+    data: Pick<JwtRefreshPayloadType, 'sessionId' | 'sessionToken'>,
   ): Promise<Omit<LoginResponseDto, 'user'>> {
     const session = await this.sessionService.findById(data.sessionId)
 
@@ -329,14 +332,23 @@ export class AuthService {
       throw new UnauthorizedException()
     }
 
-    if (session.hash !== data.hash) {
+    if (session.sessionToken !== data.sessionToken) {
       throw new UnauthorizedException()
     }
 
-    const hash = crypto
+    // Check if session has expired
+    if (new Date() > new Date(session.expires)) {
+      await this.sessionService.deleteById(session.id)
+      throw new UnauthorizedException('Session has expired')
+    }
+
+    const sessionToken = crypto
       .createHash('sha256')
       .update(randomStringGenerator())
       .digest('hex')
+
+    const expires = new Date()
+    expires.setHours(expires.getHours() + 24) // Extend session for another 24 hours
 
     const user = await this.userService.findById(session.userId)
 
@@ -345,17 +357,19 @@ export class AuthService {
     }
 
     await this.sessionService.update(session.id, {
-      hash,
+      sessionToken,
+      expires,
     })
 
-    const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: session.userId,
-      sessionId: session.id,
-      hash,
-    })
+    const { accessToken, refreshToken, tokenExpires } =
+      await this.getTokensData({
+        id: session.userId,
+        sessionId: session.id,
+        sessionToken,
+      })
 
     return {
-      token,
+      accessToken,
       refreshToken,
       tokenExpires,
     }
@@ -372,7 +386,7 @@ export class AuthService {
   private async getTokensData(data: {
     id: User['id']
     sessionId: Session['id']
-    hash: Session['hash']
+    sessionToken: Session['sessionToken']
   }) {
     const tokenExpiresIn = this.configService.getOrThrow('auth.expires', {
       infer: true,
@@ -380,7 +394,7 @@ export class AuthService {
 
     const tokenExpires = Date.now() + ms(tokenExpiresIn)
 
-    const [token, refreshToken] = await Promise.all([
+    const [accessToken, refreshToken] = await Promise.all([
       await this.jwtService.signAsync(
         {
           id: data.id,
@@ -394,7 +408,7 @@ export class AuthService {
       await this.jwtService.signAsync(
         {
           sessionId: data.sessionId,
-          hash: data.hash,
+          sessionToken: data.sessionToken,
         },
         {
           secret: this.configService.getOrThrow('auth.refreshSecret', {
@@ -408,7 +422,7 @@ export class AuthService {
     ])
 
     return {
-      token,
+      accessToken,
       refreshToken,
       tokenExpires,
     }

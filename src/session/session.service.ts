@@ -47,13 +47,10 @@ export class SessionService {
   }
 
   async deleteByUserId(conditions: { userId: User['id'] }): Promise<void> {
-    await this.db.session.updateMany({
+    await this.db.session.deleteMany({
       where: {
         userId: conditions.userId
       },
-      data: {
-        deletedAt: new Date()
-      }
     });
   }
 

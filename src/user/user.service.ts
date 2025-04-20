@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common'
 import { PrismaService } from '@/prisma/prisma.service'
 import {
-  AuthProvidersEnum,
   CleaningDelay,
   Statuses,
   User,
@@ -72,8 +71,6 @@ export class UserService {
         email: email as string,
         password: password,
         image: null,
-        provider: createUserDto.provider ?? AuthProvidersEnum.EMAIL,
-        socialId: createUserDto.socialId,
       },
     })
   }

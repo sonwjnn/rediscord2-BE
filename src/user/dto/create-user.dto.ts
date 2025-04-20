@@ -1,6 +1,5 @@
 import { lowerCaseTransformer } from '@/utils/transformers/lower-case.transformer'
 import { ApiProperty } from '@nestjs/swagger'
-import { AuthProvidersEnum } from '@prisma/client'
 import { Transform } from 'class-transformer'
 import {
   IsDate,
@@ -21,10 +20,6 @@ export class CreateUserDto {
   @ApiProperty()
   @MinLength(6)
   password?: string
-
-  provider?: AuthProvidersEnum
-
-  socialId?: string | null
 
   @IsString()
   @IsOptional()

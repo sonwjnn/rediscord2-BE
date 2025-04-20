@@ -104,7 +104,7 @@ export class AuthController {
   public refresh(@Request() request): Promise<RefreshResponseDto> {
     return this.authService.refreshToken({
       sessionId: request.user.sessionId,
-      hash: request.user.hash,
+      sessionToken: request.user.sessionToken,
     })
   }
 

@@ -9,23 +9,20 @@ import {
   SerializeOptions,
   HttpCode,
   HttpStatus,
+  Patch,
+  Body,
 } from '@nestjs/common'
 import { AuthService } from '@/auth/auth.service'
 import { UserService } from '@/user/user.service'
 import { User } from '@prisma/client'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger'
 import { NullableType } from '@/utils/types/nullable.type'
 import { DomainUser } from './domain/user'
+import { UpdateUserDto } from './dto'
 
-interface RequestWithUser extends Request {
-  user: {
-    id: string
-    email: string
-    [key: string]: any
-  }
-}
 
+@ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @ApiTags('Users')
 @Controller({
@@ -34,19 +31,9 @@ interface RequestWithUser extends Request {
 })
 export class UsersController {
   constructor(
-    @Inject(forwardRef(() => AuthService))
     private readonly userService: UserService,
   ) {}
 
-  @ApiOkResponse({
-    type: DomainUser,
-  })
-  @Get('me')
-  @HttpCode(HttpStatus.OK)
-  getProfile(@Request() req: RequestWithUser) {
-    console.log(req.user.id)
-    return this.userService.findById(req.user.id)
-  }
 
   @ApiOkResponse({
     type: DomainUser,
@@ -63,5 +50,42 @@ export class UsersController {
   })
   findOne(@Param('id') id: User['id']): Promise<NullableType<User>> {
     return this.userService.findById(id)
+  }
+
+  @ApiOkResponse({
+    type: DomainUser,
+  })
+  @SerializeOptions({
+    groups: ['admin'],
+  })
+  @Get('email/:email')
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'email',
+    type: String,
+    required: true,
+  })
+  findByEmail(@Param('email') email: string): Promise<NullableType<User>> {
+    return this.userService.findByEmail(email)
+  }
+
+  @ApiOkResponse({
+    type: DomainUser,
+  })
+  @SerializeOptions({
+    groups: ['admin'],
+  })
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  update(
+    @Param('id') id: User['id'],
+    @Body() updateProfileDto: UpdateUserDto,
+  ): Promise<User | null> {
+    return this.userService.update(id, updateProfileDto);
   }
 }
