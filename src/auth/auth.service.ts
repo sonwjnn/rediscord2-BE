@@ -27,6 +27,12 @@ import { AuthUpdateDto } from './dto/auth-update.dto'
 import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type'
 import { MailService } from '@/mail/mail.service'
 import { v4 as uuidv4 } from 'uuid'
+import {
+  ApiBadRequestException,
+  ApiNotFoundException,
+  ApiUnauthorizedException,
+  ApiUnprocessableEntityException,
+} from '@/utils/exception'
 @Injectable()
 export class AuthService {
   constructor(
@@ -47,12 +53,7 @@ export class AuthService {
     )
 
     if (!exisingUser) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          email: 'notFound',
-        },
-      })
+      throw new ApiNotFoundException('userNotFound')
     }
 
     if (!exisingUser.emailVerified) {
@@ -65,21 +66,11 @@ export class AuthService {
         },
       })
 
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          email: 'emailNotVerified',
-        },
-      })
+      throw new ApiUnprocessableEntityException('emailNotVerified')
     }
 
     if (!exisingUser.password) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          password: 'incorrectPassword',
-        },
-      })
+      throw new ApiNotFoundException('passwordNotFound')
     }
 
     const isValidPassword = await bcrypt.compare(
@@ -88,12 +79,7 @@ export class AuthService {
     )
 
     if (!isValidPassword) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          password: 'incorrectPassword',
-        },
-      })
+      throw new ApiBadRequestException('incorrectPassword')
     }
 
     const sessionToken = crypto
@@ -151,31 +137,16 @@ export class AuthService {
     const currentUser = await this.userService.findById(userJwtPayload.id)
 
     if (!currentUser) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          user: 'userNotFound',
-        },
-      })
+      throw new ApiNotFoundException('userNotFound')
     }
 
     if (userDto.password) {
       if (!userDto.oldPassword) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            oldPassword: 'missingOldPassword',
-          },
-        })
+        throw new ApiNotFoundException('oldPasswordNotFound')
       }
 
       if (!currentUser.password) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            oldPassword: 'incorrectOldPassword',
-          },
-        })
+        throw new ApiNotFoundException('passwordNotFound')
       }
 
       const isValidOldPassword = await bcrypt.compare(
@@ -184,12 +155,7 @@ export class AuthService {
       )
 
       if (!isValidOldPassword) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            oldPassword: 'incorrectOldPassword',
-          },
-        })
+        throw new ApiBadRequestException('incorrectOldPassword')
       } else {
         await this.sessionService.deleteByUserIdWithExclude({
           userId: currentUser.id,
@@ -329,17 +295,16 @@ export class AuthService {
     const session = await this.sessionService.findById(data.sessionId)
 
     if (!session) {
-      throw new UnauthorizedException()
+      throw new ApiNotFoundException('sessionNotFound')
     }
 
     if (session.sessionToken !== data.sessionToken) {
-      throw new UnauthorizedException()
+      throw new ApiBadRequestException('incorrectToken')
     }
 
-    // Check if session has expired
     if (new Date() > new Date(session.expires)) {
       await this.sessionService.deleteById(session.id)
-      throw new UnauthorizedException('Session has expired')
+      throw new ApiUnauthorizedException('sessionExpired')
     }
 
     const sessionToken = crypto
@@ -353,7 +318,7 @@ export class AuthService {
     const user = await this.userService.findById(session.userId)
 
     if (!user) {
-      throw new UnauthorizedException()
+      throw new ApiNotFoundException('userNotFound')
     }
 
     await this.sessionService.update(session.id, {

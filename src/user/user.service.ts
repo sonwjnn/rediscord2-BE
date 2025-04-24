@@ -4,14 +4,11 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import { PrismaService } from '@/prisma/prisma.service'
-import {
-  CleaningDelay,
-  Statuses,
-  User,
-} from '@prisma/client'
+import { CleaningDelay, Statuses, User } from '@prisma/client'
 import { CreateUserDto, UpdateUserDto, UpdatePasswordDto } from './dto'
 import * as bcrypt from 'bcryptjs'
 import { NullableType } from '@/utils/types/nullable.type'
+import { ApiConflictException, ApiNotFoundException } from '@/utils/exception'
 
 @Injectable()
 export class UserService {
@@ -37,12 +34,7 @@ export class UserService {
         },
       })
       if (userObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            email: 'emailAlreadyExists',
-          },
-        })
+        throw new ApiConflictException('emailExists')
       }
       email = createUserDto.email
     }
@@ -54,12 +46,7 @@ export class UserService {
         },
       })
       if (userObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            name: 'nameAlreadyExists',
-          },
-        })
+        throw new ApiConflictException('nameExists')
       }
     }
 
@@ -154,16 +141,11 @@ export class UserService {
     let cleaningDelay: CleaningDelay | undefined = undefined
 
     if (updateUserDto.cleaningDelay) {
-      const roleObject = Object.values(CleaningDelay)
+      const cleaningDelayObject = Object.values(CleaningDelay)
         .map(String)
         .includes(String(updateUserDto.cleaningDelay))
-      if (!roleObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            role: 'roleNotExists',
-          },
-        })
+      if (!cleaningDelayObject) {
+        throw new ApiNotFoundException('cleaningDelayNotFound')
       }
 
       cleaningDelay = updateUserDto.cleaningDelay
@@ -176,12 +158,7 @@ export class UserService {
         .map(String)
         .includes(String(updateUserDto.status))
       if (!statusObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            status: 'statusNotExists',
-          },
-        })
+        throw new ApiNotFoundException('statusNotFound')
       }
 
       status = updateUserDto.status

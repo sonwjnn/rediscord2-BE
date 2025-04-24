@@ -12,15 +12,18 @@ import {
   Patch,
   Body,
 } from '@nestjs/common'
-import { AuthService } from '@/auth/auth.service'
 import { UserService } from '@/user/user.service'
 import { User } from '@prisma/client'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger'
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger'
 import { NullableType } from '@/utils/types/nullable.type'
 import { DomainUser } from './domain/user'
 import { UpdateUserDto } from './dto'
-
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
@@ -30,10 +33,7 @@ import { UpdateUserDto } from './dto'
   version: '1',
 })
 export class UsersController {
-  constructor(
-    private readonly userService: UserService,
-  ) {}
-
+  constructor(private readonly userService: UserService) {}
 
   @ApiOkResponse({
     type: DomainUser,
@@ -86,6 +86,6 @@ export class UsersController {
     @Param('id') id: User['id'],
     @Body() updateProfileDto: UpdateUserDto,
   ): Promise<User | null> {
-    return this.userService.update(id, updateProfileDto);
+    return this.userService.update(id, updateProfileDto)
   }
 }
