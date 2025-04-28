@@ -1,18 +1,19 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
-import { AuthModule } from '@/auth/auth.module'
-import { UserModule } from '@/user/user.module'
-import { PrismaModule } from '@/prisma/prisma.module'
-import { MailModule } from './mail/mail.module'
-import { MailerService } from './mailer/mailer.service'
-import { MailerModule } from './mailer/mailer.module'
-import appConfig from './config/app.config'
-import authConfig from './auth/config/auth.config'
-import mailConfig from './mail/config/mail.config'
+import { AuthModule } from '@/modules/auth/auth.module'
+import { UserModule } from '@/modules/user/user.module'
+import { PrismaModule } from '@/modules/prisma/prisma.module'
+import { MailModule } from '@/modules/mail/mail.module'
+import { MailerService } from '@/modules/mailer/mailer.service'
+import { MailerModule } from '@/modules/mailer/mailer.module'
+import appConfig from '@/config/app.config'
+import authConfig from '@/modules/auth/config/auth.config'
+import mailConfig from '@/modules/mail/config/mail.config'
 import { HeaderResolver, I18nModule } from 'nestjs-i18n'
-import { AllConfigType } from './config/config.type'
+import { AllConfigType } from '@/config/config.type'
 import * as path from 'path'
-import { AccountModule } from './account/account.module'
+import { AccountModule } from '@/modules/account/account.module'
+import { AuthGoogleModule } from '@/modules/auth-google/auth-google.module'
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { AccountModule } from './account/account.module'
       inject: [ConfigService],
     }),
     AccountModule,
+    AuthGoogleModule,
     AuthModule,
     UserModule,
     PrismaModule,
