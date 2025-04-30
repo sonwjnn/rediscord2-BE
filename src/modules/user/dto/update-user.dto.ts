@@ -5,6 +5,10 @@ export class UpdateUserDto {
   @IsOptional()
   image?: string | null
 
+  @IsString()
+  @IsOptional()
+  name?: string | null
+
   @IsDate()
   @IsOptional()
   emailVerified?: Date | null

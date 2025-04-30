@@ -11,6 +11,12 @@ export class DomainUser {
     type: String,
     example: 'johndoe',
   })
+  username: string | null
+
+  @ApiProperty({
+    type: String,
+    example: 'John Doe',
+  })
   name: string | null
 
   @ApiProperty({

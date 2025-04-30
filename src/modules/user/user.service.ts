@@ -35,14 +35,10 @@ export class UserService {
       email = createUserDto.email
     }
 
-    if (createUserDto.name) {
-      const userObject = await this.db.user.findUnique({
-        where: {
-          name: createUserDto.name,
-        },
-      })
+    if (createUserDto.username) {
+      const userObject = await this.findByUsername(createUserDto.username)
       if (userObject) {
-        throw new ApiConflictException('nameExists')
+        throw new ApiConflictException('usernameExists')
       }
     }
 
@@ -50,10 +46,11 @@ export class UserService {
       // Do not remove comment below.
       // <creating-property-payload />
       data: {
-        name: createUserDto.name,
+        username: createUserDto.username,
         email: email as string,
         password: password,
         image: null,
+        ...(createUserDto.name ? { name: createUserDto.name } : {}),
       },
     })
   }
@@ -112,9 +109,9 @@ export class UserService {
     })
   }
 
-  findByName(name: string): Promise<NullableType<User>> {
+  findByUsername(username: string): Promise<NullableType<User>> {
     return this.db.user.findUnique({
-      where: { name },
+      where: { username },
     })
   }
 

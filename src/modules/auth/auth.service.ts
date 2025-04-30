@@ -123,6 +123,10 @@ export class AuthService {
       userByEmail = await this.userService.findByEmail(socialEmail)
     }
 
+    if (userByEmail && !!userByEmail.password) {
+      throw new ApiUnprocessableEntityException('credentialExists')
+    }
+
     if (socialData.id) {
       user = await this.userService.findBySocialIdAndProvider({
         socialId: socialData.id,
@@ -133,6 +137,10 @@ export class AuthService {
     if (user) {
       if (socialEmail && !userByEmail) {
         user.email = socialEmail
+        user.emailVerified = new Date()
+      }
+      if (userByEmail && !user.emailVerified) {
+        user.emailVerified = new Date()
       }
       await this.userService.update(user.id, user)
     } else if (userByEmail) {

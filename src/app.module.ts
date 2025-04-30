@@ -14,12 +14,13 @@ import { AllConfigType } from '@/config/config.type'
 import * as path from 'path'
 import { AccountModule } from '@/modules/account/account.module'
 import { AuthGoogleModule } from '@/modules/auth-google/auth-google.module'
+import googleConfig from '@/modules/auth-google/config/google.config'
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [authConfig, appConfig, mailConfig],
+      load: [authConfig, appConfig, mailConfig, googleConfig],
       envFilePath: ['.env'],
     }),
     I18nModule.forRootAsync({

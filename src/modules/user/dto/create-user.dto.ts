@@ -28,5 +28,10 @@ export class CreateUserDto {
   @ApiProperty({ example: 'sonwin111', type: String })
   @IsString()
   @IsOptional()
+  username?: string | null
+
+  @ApiProperty({ example: 'Hoang Son', type: String })
+  @IsString()
+  @IsOptional()
   name?: string | null
 }
