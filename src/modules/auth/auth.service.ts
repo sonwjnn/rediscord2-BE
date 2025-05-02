@@ -363,6 +363,16 @@ export class AuthService {
       throw new ApiNotFoundException('userNotFound')
     }
 
+    if (!user.password) {
+      throw new ApiBadRequestException('isSocialAccount')
+    }
+
+    const comparePassword = await bcrypt.compare(password, user.password)
+
+    if (comparePassword) {
+      throw new ApiBadRequestException('samePassword')
+    }
+
     user.password = password
 
     await this.sessionService.deleteByUserId({
