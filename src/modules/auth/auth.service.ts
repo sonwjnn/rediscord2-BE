@@ -34,7 +34,7 @@ import {
 } from '@/utils/exception'
 import { SocialInterface } from '@/modules/social/interfaces/social.interface'
 import { RefreshResponseDto } from './dto/refresh-response.dto'
-import { addHours, addSeconds } from 'date-fns'
+import { addHours, addMinutes, addSeconds } from 'date-fns'
 @Injectable()
 export class AuthService {
   constructor(
@@ -200,12 +200,13 @@ export class AuthService {
       email: dto.email,
     })
 
-    const token = await this.generateVerificationToken(user.email)
+    const { token, expires } = await this.generateVerificationToken(user.email)
 
     await this.mailService.userSignUp({
       to: dto.email,
       data: {
         token,
+        tokenExpires: expires,
         email: dto.email,
       },
     })
@@ -286,6 +287,12 @@ export class AuthService {
     user.emailVerified = new Date()
 
     await this.userService.update(user.id, user)
+
+    await this.db.verificationToken.deleteMany({
+      where: {
+        email: user.email,
+      },
+    })
   }
 
   async resendVerificationConfirmEmail(email: string): Promise<void> {
@@ -303,17 +310,19 @@ export class AuthService {
         to: email,
         data: {
           token: updatedToken.token,
+          tokenExpires: updatedToken.expires,
           email,
         },
       })
     }
 
-    const token = await this.generateVerificationToken(email)
+    const { token, expires } = await this.generateVerificationToken(email)
 
     await this.mailService.userSignUp({
       to: email,
       data: {
         token,
+        tokenExpires: expires,
         email: email,
       },
     })
@@ -323,72 +332,35 @@ export class AuthService {
     const user = await this.userService.findByEmail(email)
 
     if (!user) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          email: 'emailNotExists',
-        },
-      })
+      throw new ApiNotFoundException('emailNotExists')
     }
 
-    const tokenExpiresIn = this.configService.getOrThrow('auth.forgotExpires', {
-      infer: true,
-    })
-
-    const tokenExpires = Date.now() + ms(tokenExpiresIn)
-
-    const hash = await this.jwtService.signAsync(
-      {
-        forgotUserId: user.id,
-      },
-      {
-        secret: this.configService.getOrThrow('auth.forgotSecret', {
-          infer: true,
-        }),
-        expiresIn: tokenExpiresIn,
-      },
-    )
+    const { token, expires } = await this.generatePasswordResetToken(user.email)
 
     await this.mailService.forgotPassword({
       to: email,
       data: {
-        hash,
-        tokenExpires,
+        token,
+        tokenExpires: expires,
       },
     })
   }
 
   async resetPassword(hash: string, password: string): Promise<void> {
-    let userId: User['id']
+    const existingToken = await this.db.passwordResetToken.findFirst({
+      where: {
+        token: hash,
+      },
+    })
 
-    try {
-      const jwtData = await this.jwtService.verifyAsync<{
-        forgotUserId: User['id']
-      }>(hash, {
-        secret: this.configService.getOrThrow('auth.forgotSecret', {
-          infer: true,
-        }),
-      })
-
-      userId = jwtData.forgotUserId
-    } catch {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          hash: `invalidHash`,
-        },
-      })
+    if (!existingToken) {
+      throw new ApiBadRequestException('tokenNotFound')
     }
 
-    const user = await this.userService.findById(userId)
+    const user = await this.userService.findByEmail(existingToken.email)
 
     if (!user) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          hash: `notFound`,
-        },
-      })
+      throw new ApiNotFoundException('userNotFound')
     }
 
     user.password = password
@@ -398,6 +370,12 @@ export class AuthService {
     })
 
     await this.userService.update(user.id, user)
+
+    await this.db.passwordResetToken.deleteMany({
+      where: {
+        email: user.email,
+      },
+    })
   }
 
   async refreshToken(
@@ -504,7 +482,10 @@ export class AuthService {
     }
   }
 
-  private async generateVerificationToken(email: string): Promise<string> {
+  private async generateVerificationToken(email: string): Promise<{
+    token: string
+    expires: Date
+  }> {
     const existingToken = await this.db.verificationToken.findFirst({
       where: {
         email,
@@ -520,8 +501,7 @@ export class AuthService {
     }
 
     const token = uuidv4()
-    const expires = new Date()
-    expires.setMinutes(expires.getMinutes() + 5) // 5 minutes
+    const expires = addMinutes(new Date(), 5)
 
     await this.db.verificationToken.create({
       data: {
@@ -531,10 +511,16 @@ export class AuthService {
       },
     })
 
-    return token
+    return {
+      token,
+      expires,
+    }
   }
 
-  private async generatePasswordResetToken(email: string): Promise<string> {
+  private async generatePasswordResetToken(email: string): Promise<{
+    token: string
+    expires: Date
+  }> {
     const existingToken = await this.db.passwordResetToken.findFirst({
       where: {
         email,
@@ -550,8 +536,7 @@ export class AuthService {
     }
 
     const token = uuidv4()
-    const expires = new Date()
-    expires.setHours(expires.getHours() + 24)
+    const expires = addMinutes(new Date(), 5)
 
     await this.db.passwordResetToken.create({
       data: {
@@ -561,7 +546,10 @@ export class AuthService {
       },
     })
 
-    return token
+    return {
+      token,
+      expires,
+    }
   }
 
   private async generateTwoFactorToken(email: string): Promise<string> {

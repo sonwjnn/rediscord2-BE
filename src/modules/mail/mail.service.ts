@@ -16,7 +16,7 @@ export class MailService {
   ) {}
 
   async userSignUp(
-    mailData: MailData<{ token: string; email: string }>,
+    mailData: MailData<{ token: string; email: string; tokenExpires: Date }>,
   ): Promise<void> {
     const i18n = I18nContext.current()
     let emailConfirmTitle: MaybeType<string>
@@ -41,6 +41,7 @@ export class MailService {
       }) + '/auth/confirm-email',
     )
     url.searchParams.set('token', mailData.data.token)
+    url.searchParams.set('expires', mailData.data.tokenExpires.toString())
     url.searchParams.set('email', mailData.data.email)
 
     await this.mailerService.sendMail({
@@ -70,7 +71,7 @@ export class MailService {
   }
 
   async forgotPassword(
-    mailData: MailData<{ hash: string; tokenExpires: number }>,
+    mailData: MailData<{ token: string; tokenExpires: Date }>,
   ): Promise<void> {
     const i18n = I18nContext.current()
     let resetPasswordTitle: MaybeType<string>
@@ -92,9 +93,9 @@ export class MailService {
     const url = new URL(
       this.configService.getOrThrow('app.frontendDomain', {
         infer: true,
-      }) + '/password-change',
+      }) + '/auth/reset',
     )
-    url.searchParams.set('hash', mailData.data.hash)
+    url.searchParams.set('token', mailData.data.token)
     url.searchParams.set('expires', mailData.data.tokenExpires.toString())
 
     await this.mailerService.sendMail({
@@ -106,6 +107,7 @@ export class MailService {
           infer: true,
         }),
         'src',
+        'modules',
         'mail',
         'mail-templates',
         'reset-password.hbs',
