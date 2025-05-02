@@ -15,7 +15,9 @@ export class MailService {
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
 
-  async userSignUp(mailData: MailData<{ token: string }>): Promise<void> {
+  async userSignUp(
+    mailData: MailData<{ token: string; email: string }>,
+  ): Promise<void> {
     const i18n = I18nContext.current()
     let emailConfirmTitle: MaybeType<string>
     let text1: MaybeType<string>
@@ -36,9 +38,10 @@ export class MailService {
     const url = new URL(
       this.configService.getOrThrow('app.frontendDomain', {
         infer: true,
-      }) + '/confirm-email',
+      }) + '/auth/confirm-email',
     )
     url.searchParams.set('token', mailData.data.token)
+    url.searchParams.set('email', mailData.data.email)
 
     await this.mailerService.sendMail({
       to: mailData.to,
@@ -49,6 +52,7 @@ export class MailService {
           infer: true,
         }),
         'src',
+        'modules',
         'mail',
         'mail-templates',
         'activation.hbs',

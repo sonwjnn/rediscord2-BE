@@ -24,6 +24,7 @@ import { AuthUpdateDto } from './dto/auth-update.dto'
 import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto'
 import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto'
 import { AuthResetPasswordDto } from './dto/auth-reset-password.dto'
+import { AuthConfirmEmailResendDto } from './dto/auth-confirm-email-resend.dto'
 
 @ApiTags('Auth')
 @Controller({
@@ -57,6 +58,16 @@ export class AuthController {
     @Body() confirmEmailDto: AuthConfirmEmailDto,
   ): Promise<void> {
     return this.authService.confirmEmail(confirmEmailDto.token)
+  }
+
+  @Post('email/confirm/resend')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resendConfirmEmail(
+    @Body() confirmEmailDto: AuthConfirmEmailResendDto,
+  ): Promise<void> {
+    return this.authService.resendVerificationConfirmEmail(
+      confirmEmailDto.email,
+    )
   }
 
   @Post('forgot/password')

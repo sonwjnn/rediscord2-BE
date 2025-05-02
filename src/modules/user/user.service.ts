@@ -90,7 +90,7 @@ export class UserService {
             email: usernameOrEmail,
           },
           {
-            name: usernameOrEmail,
+            username: usernameOrEmail,
           },
         ],
       },

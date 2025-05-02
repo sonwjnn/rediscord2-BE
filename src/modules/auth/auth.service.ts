@@ -7,7 +7,6 @@ import {
   forwardRef,
   UnprocessableEntityException,
   HttpStatus,
-  UnauthorizedException,
   NotFoundException,
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
@@ -34,6 +33,8 @@ import {
   ApiUnprocessableEntityException,
 } from '@/utils/exception'
 import { SocialInterface } from '@/modules/social/interfaces/social.interface'
+import { RefreshResponseDto } from './dto/refresh-response.dto'
+import { addHours, addSeconds } from 'date-fns'
 @Injectable()
 export class AuthService {
   constructor(
@@ -58,20 +59,11 @@ export class AuthService {
     }
 
     if (!exisingUser.emailVerified) {
-      const token = await this.generateVerificationToken(exisingUser.email)
-
-      await this.mailService.userSignUp({
-        to: exisingUser.email,
-        data: {
-          token,
-        },
-      })
-
-      throw new ApiUnprocessableEntityException('emailNotVerified')
+      throw new ApiUnauthorizedException('emailNotVerified')
     }
 
     if (!exisingUser.password) {
-      throw new ApiNotFoundException('passwordNotFound')
+      throw new ApiNotFoundException('isSocialAccount')
     }
 
     const isValidPassword = await bcrypt.compare(
@@ -177,8 +169,7 @@ export class AuthService {
       .update(randomStringGenerator())
       .digest('hex')
 
-    const expires = new Date()
-    expires.setHours(expires.getHours() + 24) // Session expires in 24 hours
+    const expires = addSeconds(new Date(), 30)
 
     const session = await this.sessionService.create({
       userId: user.id,
@@ -215,6 +206,7 @@ export class AuthService {
       to: dto.email,
       data: {
         token,
+        email: dto.email,
       },
     })
   }
@@ -272,33 +264,59 @@ export class AuthService {
     })
 
     if (!existingToken) {
-      throw new NotFoundException({
-        status: HttpStatus.NOT_FOUND,
-        error: `notFound`,
-      })
+      throw new ApiBadRequestException('tokenNotFound')
     }
 
     const hasExpired = new Date(existingToken.expires) < new Date()
 
     if (hasExpired) {
-      throw new NotFoundException({
-        status: HttpStatus.NOT_FOUND,
-        error: `notFound`,
-      })
+      throw new ApiBadRequestException('tokenExpired')
     }
 
     const user = await this.userService.findByEmail(existingToken.email)
 
-    if (!user || user?.emailVerified) {
-      throw new NotFoundException({
-        status: HttpStatus.NOT_FOUND,
-        error: `notFound`,
-      })
+    if (!user) {
+      throw new ApiNotFoundException('userNotFound')
+    }
+
+    if (user.emailVerified) {
+      throw new ApiBadRequestException('emailVerified')
     }
 
     user.emailVerified = new Date()
 
     await this.userService.update(user.id, user)
+  }
+
+  async resendVerificationConfirmEmail(email: string): Promise<void> {
+    const existingToken = await this.db.verificationToken.findFirst({
+      where: { email },
+    })
+
+    if (existingToken) {
+      const updatedToken = await this.db.verificationToken.update({
+        where: { id: existingToken.id },
+        data: { expires: addSeconds(new Date(), 30) },
+      })
+
+      await this.mailService.userSignUp({
+        to: email,
+        data: {
+          token: updatedToken.token,
+          email,
+        },
+      })
+    }
+
+    const token = await this.generateVerificationToken(email)
+
+    await this.mailService.userSignUp({
+      to: email,
+      data: {
+        token,
+        email: email,
+      },
+    })
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -384,7 +402,7 @@ export class AuthService {
 
   async refreshToken(
     data: Pick<JwtRefreshPayloadType, 'sessionId' | 'sessionToken'>,
-  ): Promise<Omit<LoginResponseDto, 'user'>> {
+  ): Promise<Omit<RefreshResponseDto, 'user'>> {
     const session = await this.sessionService.findById(data.sessionId)
 
     if (!session) {

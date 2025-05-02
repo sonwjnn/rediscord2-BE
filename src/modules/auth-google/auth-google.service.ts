@@ -50,7 +50,7 @@ export class AuthGoogleService {
       'https://www.googleapis.com/oauth2/v3/userinfo',
       {
         headers: {
-          Authorization: `Bearer ${loginDto.token}`,
+          Authorization: `Bearer ${loginDto.accessToken}`,
         },
       },
     )
