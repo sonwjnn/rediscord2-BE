@@ -296,6 +296,16 @@ export class AuthService {
   }
 
   async resendVerificationConfirmEmail(email: string): Promise<void> {
+    const user = await this.userService.findByEmail(email)
+
+    if (!user) {
+      throw new ApiNotFoundException('emailNotExists')
+    }
+
+    if (user.emailVerified) {
+      throw new ApiBadRequestException('emailVerified')
+    }
+
     const existingToken = await this.db.verificationToken.findFirst({
       where: { email },
     })
@@ -333,6 +343,33 @@ export class AuthService {
 
     if (!user) {
       throw new ApiNotFoundException('emailNotExists')
+    }
+
+    if (!user.emailVerified) {
+      throw new ApiBadRequestException('emailNotVerified')
+    }
+
+    if (!user.password) {
+      throw new ApiBadRequestException('isSocialAccount')
+    }
+
+    const existingToken = await this.db.passwordResetToken.findFirst({
+      where: { email },
+    })
+
+    if (existingToken) {
+      const updatedToken = await this.db.passwordResetToken.update({
+        where: { id: existingToken.id },
+        data: { expires: addSeconds(new Date(), 30) },
+      })
+
+      await this.mailService.forgotPassword({
+        to: email,
+        data: {
+          token: updatedToken.token,
+          tokenExpires: updatedToken.expires,
+        },
+      })
     }
 
     const { token, expires } = await this.generatePasswordResetToken(user.email)

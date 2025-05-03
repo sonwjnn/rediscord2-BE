@@ -6,6 +6,7 @@ import { PrismaModule } from '@/modules/prisma/prisma.module'
 import { MailModule } from '@/modules/mail/mail.module'
 import { MailerService } from '@/modules/mailer/mailer.service'
 import { MailerModule } from '@/modules/mailer/mailer.module'
+import { ProjectModule } from '@/modules/project/project.module'
 import appConfig from '@/config/app.config'
 import authConfig from '@/modules/auth/config/auth.config'
 import mailConfig from '@/modules/mail/config/mail.config'
@@ -53,6 +54,7 @@ import googleConfig from '@/modules/auth-google/config/google.config'
     PrismaModule,
     MailModule,
     MailerModule,
+    ProjectModule,
   ],
   providers: [MailerService],
 })
