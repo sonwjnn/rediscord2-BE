@@ -10,18 +10,20 @@ import { ProjectModule } from '@/modules/project/project.module'
 import appConfig from '@/config/app.config'
 import authConfig from '@/modules/auth/config/auth.config'
 import mailConfig from '@/modules/mail/config/mail.config'
+import paymentConfig from '@/modules/payment/config/payment.config'
 import { HeaderResolver, I18nModule } from 'nestjs-i18n'
 import { AllConfigType } from '@/config/config.type'
 import * as path from 'path'
 import { AccountModule } from '@/modules/account/account.module'
 import { AuthGoogleModule } from '@/modules/auth-google/auth-google.module'
+import { PaymentModule } from './modules/payment/payment.module'
 import googleConfig from '@/modules/auth-google/config/google.config'
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [authConfig, appConfig, mailConfig, googleConfig],
+      load: [authConfig, appConfig, mailConfig, googleConfig, paymentConfig],
       envFilePath: ['.env'],
     }),
     I18nModule.forRootAsync({
@@ -55,6 +57,7 @@ import googleConfig from '@/modules/auth-google/config/google.config'
     MailModule,
     MailerModule,
     ProjectModule,
+    PaymentModule,
   ],
   providers: [MailerService],
 })

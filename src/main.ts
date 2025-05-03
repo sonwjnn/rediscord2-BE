@@ -10,6 +10,7 @@ import validationOptions from '@/utils/validation-options'
 import { ResolvePromisesInterceptor } from '@/middlewares/interceptors/serializer.interceptor'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { AllConfigType } from '@/config/config.type'
+import * as bodyParser from 'body-parser'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -29,6 +30,26 @@ async function bootstrap() {
       exclude: ['/'],
     },
   )
+
+  app.use(
+    bodyParser.raw({
+      type: 'application/json', // Use this for JSON requests
+    }),
+  )
+  app.use((req, res, next) => {
+    if (req.originalUrl === '/api/v1/payment/webhook') {
+      bodyParser.raw({ type: 'application/json' })(req, res, err => {
+        if (err) return next(err)
+
+        // Store the raw body for Stripe signature verification
+        req.rawBody = req.body
+        next()
+      })
+    } else {
+      bodyParser.json()(req, res, next)
+    }
+  })
+
   app.enableVersioning({
     type: VersioningType.URI,
   })

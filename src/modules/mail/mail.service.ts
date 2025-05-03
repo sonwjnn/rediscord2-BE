@@ -33,8 +33,6 @@ export class MailService {
       ])
     }
 
-    console.log(emailConfirmTitle, text1, text2, text3)
-
     const url = new URL(
       this.configService.getOrThrow('app.frontendDomain', {
         infer: true,
