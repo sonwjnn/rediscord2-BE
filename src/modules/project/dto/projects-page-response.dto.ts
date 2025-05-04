@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { ProjectDto } from './project-response.dto'
+import { ProjectDto } from '../domain/project.dto'
 
 export class ProjectsPageResponseDto {
   @ApiProperty({ type: [ProjectDto] })

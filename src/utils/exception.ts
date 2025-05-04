@@ -36,6 +36,17 @@ export class ApiInternalServerException extends BaseException {
   }
 }
 
+export class ApiPayloadTooLargeException extends BaseException {
+  static STATUS = HttpStatus.PAYLOAD_TOO_LARGE
+  constructor(message?: MessageType, parameters?: ParametersType) {
+    super(
+      message ?? ApiPayloadTooLargeException.name,
+      ApiPayloadTooLargeException.STATUS,
+      parameters,
+    )
+  }
+}
+
 export class ApiNotFoundException extends BaseException {
   static STATUS = HttpStatus.NOT_FOUND
   constructor(message?: MessageType, parameters?: ParametersType) {

@@ -1,7 +1,8 @@
+import { FileType } from '@/modules/files/domain/file'
 import { ApiProperty } from '@nestjs/swagger'
-import { Project } from '@prisma/client'
+import { Exclude } from 'class-transformer'
 
-export class ProjectDto implements Project {
+export class ProjectDto {
   @ApiProperty()
   id: string
 
@@ -20,8 +21,13 @@ export class ProjectDto implements Project {
   @ApiProperty()
   width: number
 
-  @ApiProperty({ required: false, nullable: true })
-  thumbnailUrl: string | null
+  @ApiProperty({
+    type: () => FileType,
+  })
+  thumbnail?: FileType | null
+
+  @Exclude()
+  thumbnailId?: string | null
 
   @ApiProperty({ required: false, nullable: true })
   isTemplate: boolean | null

@@ -1,3 +1,4 @@
+import { FileConfig } from '@/modules/files/config/file-config.type'
 import { GoogleConfig } from '@/modules/auth-google/config/google-config.type'
 import { AuthConfig } from '@/modules/auth/config/auth-config.type'
 import { AppConfig } from '@/config/app-config.type'
@@ -10,4 +11,5 @@ export type AllConfigType = {
   mail: MailConfig
   google: GoogleConfig
   payment: PaymentConfig
+  file: FileConfig
 }

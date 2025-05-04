@@ -1,3 +1,4 @@
+import { ApiUnprocessableEntityException } from '@/utils/exception'
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '@/modules/prisma/prisma.service'
 import { User } from '@prisma/client'
@@ -5,10 +6,14 @@ import { CreateUserDto, UpdateUserDto } from './dto'
 import * as bcrypt from 'bcryptjs'
 import { NullableType } from '@/utils/types/nullable.type'
 import { ApiConflictException } from '@/utils/exception'
+import { FilesService } from '@/modules/files/files.service'
 
 @Injectable()
 export class UserService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly filesService: FilesService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     // Do not remove comment below.
@@ -49,7 +54,6 @@ export class UserService {
         username: createUserDto.username,
         email: email as string,
         password: password,
-        image: null,
         ...(createUserDto.name ? { name: createUserDto.name } : {}),
       },
     })
@@ -133,24 +137,17 @@ export class UserService {
       }
     }
 
-    // let photo: FileType | null | undefined = undefined;
+    let imageId: string | null | undefined = undefined
 
-    // if (updateUserDto.photo?.id) {
-    //   const fileObject = await this.filesService.findById(
-    //     updateUserDto.photo.id,
-    //   );
-    //   if (!fileObject) {
-    //     throw new UnprocessableEntityException({
-    //       status: HttpStatus.UNPROCESSABLE_ENTITY,
-    //       errors: {
-    //         photo: 'imageNotExists',
-    //       },
-    //     });
-    //   }
-    //   photo = fileObject;
-    // } else if (updateUserDto.photo === null) {
-    //   photo = null;
-    // }
+    if (updateUserDto.imageId) {
+      const fileObject = await this.filesService.findById(updateUserDto.imageId)
+      if (!fileObject) {
+        throw new ApiUnprocessableEntityException('imageNotExists')
+      }
+      imageId = fileObject.id
+    } else if (updateUserDto.imageId === null) {
+      imageId = null
+    }
 
     return this.db.user.update({
       where: { id },
@@ -158,7 +155,7 @@ export class UserService {
       // <updating-property-payload />
       data: {
         password: password,
-        image: updateUserDto.image,
+        imageId: updateUserDto.imageId,
         emailVerified: updateUserDto.emailVerified,
       },
     })

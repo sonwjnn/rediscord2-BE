@@ -1,3 +1,4 @@
+import * as path from 'path'
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { AuthModule } from '@/modules/auth/auth.module'
@@ -7,23 +8,31 @@ import { MailModule } from '@/modules/mail/mail.module'
 import { MailerService } from '@/modules/mailer/mailer.service'
 import { MailerModule } from '@/modules/mailer/mailer.module'
 import { ProjectModule } from '@/modules/project/project.module'
+
+import { HeaderResolver, I18nModule } from 'nestjs-i18n'
+import { AccountModule } from '@/modules/account/account.module'
+import { AuthGoogleModule } from '@/modules/auth-google/auth-google.module'
+import { PaymentModule } from './modules/payment/payment.module'
+import { AllConfigType } from '@/config/config.type'
+
+import googleConfig from '@/modules/auth-google/config/google.config'
 import appConfig from '@/config/app.config'
 import authConfig from '@/modules/auth/config/auth.config'
 import mailConfig from '@/modules/mail/config/mail.config'
 import paymentConfig from '@/modules/payment/config/payment.config'
-import { HeaderResolver, I18nModule } from 'nestjs-i18n'
-import { AllConfigType } from '@/config/config.type'
-import * as path from 'path'
-import { AccountModule } from '@/modules/account/account.module'
-import { AuthGoogleModule } from '@/modules/auth-google/auth-google.module'
-import { PaymentModule } from './modules/payment/payment.module'
-import googleConfig from '@/modules/auth-google/config/google.config'
-
+import fileConfig from '@/modules/files/config/file.config'
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [authConfig, appConfig, mailConfig, googleConfig, paymentConfig],
+      load: [
+        authConfig,
+        appConfig,
+        mailConfig,
+        googleConfig,
+        paymentConfig,
+        fileConfig,
+      ],
       envFilePath: ['.env'],
     }),
     I18nModule.forRootAsync({

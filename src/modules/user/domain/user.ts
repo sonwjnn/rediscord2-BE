@@ -1,5 +1,6 @@
 import { Exclude, Expose } from 'class-transformer'
 import { ApiProperty } from '@nestjs/swagger'
+import { FileType } from '@/modules/files/domain/file'
 
 export class DomainUser {
   @ApiProperty({
@@ -34,10 +35,13 @@ export class DomainUser {
   @Exclude({ toPlainOnly: true })
   password?: string | null
 
+  @Exclude()
+  imageId?: string | null
+
   @ApiProperty({
-    type: String,
+    type: () => FileType,
   })
-  image: string | null
+  image?: FileType | null
 
   @ApiProperty({
     type: Boolean,

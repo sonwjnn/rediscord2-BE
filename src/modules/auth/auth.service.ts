@@ -53,7 +53,6 @@ export class AuthService {
     const exisingUser = await this.userService.findByUsernameOrEmail(
       loginDto.usernameOrEmail,
     )
-
     if (!exisingUser) {
       throw new ApiNotFoundException('userNotFound')
     }

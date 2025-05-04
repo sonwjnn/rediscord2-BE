@@ -3,6 +3,7 @@ import { PrismaService } from '@/modules/prisma/prisma.service'
 import { Project } from '@prisma/client'
 import {
   CreateProjectDto,
+  ProjectDto,
   ProjectsPageResponseDto,
   UpdateProjectDto,
 } from './dto'
@@ -27,6 +28,9 @@ export class ProjectService {
       take: limit,
       skip: (page - 1) * limit,
       orderBy: [{ isPro: 'asc' }, { updatedAt: 'desc' }],
+      include: {
+        thumbnail: true,
+      },
     })
   }
 
@@ -34,7 +38,7 @@ export class ProjectService {
     userId: string,
     page: number,
     limit: number,
-  ): Promise<Project[]> {
+  ): Promise<ProjectDto[]> {
     return this.db.project.findMany({
       where: { userId },
       take: limit,
@@ -42,36 +46,35 @@ export class ProjectService {
       orderBy: {
         updatedAt: 'desc',
       },
-    })
-  }
-  findOne(id: string, userId: string): Promise<Project | null> {
-    return this.db.project.findFirst({
-      where: {
-        id,
-        userId,
+      include: {
+        thumbnail: true,
       },
     })
   }
-  create(data: CreateProjectDto & { userId: string }): Promise<Project> {
+  findOne(id: string, userId: string): Promise<NullableType<ProjectDto>> {
+    return this.db.project.findFirst({
+      where: { id, userId },
+      include: {
+        thumbnail: true,
+      },
+    })
+  }
+  create(
+    data: CreateProjectDto & { userId: string },
+  ): Promise<NullableType<ProjectDto>> {
     return this.db.project.create({
       data: { ...data, createdAt: new Date(), updatedAt: new Date() },
     })
   }
-  async update(
+  update(
     id: string,
     userId: string,
     data: UpdateProjectDto,
-  ): Promise<NullableType<Project>> {
-    const updated = await this.db.project.update({
+  ): Promise<NullableType<ProjectDto>> {
+    return this.db.project.update({
       where: { id, userId },
       data: { ...data, updatedAt: new Date() },
     })
-
-    if (!updated) {
-      throw new ApiNotFoundException('projectNotFound')
-    }
-
-    return updated
   }
   delete(id: string, userId: string): Promise<NullableType<{ id: string }>> {
     return this.db.project.delete({
@@ -81,7 +84,10 @@ export class ProjectService {
       },
     })
   }
-  async duplicate(id: string, userId: string): Promise<NullableType<Project>> {
+  async duplicate(
+    id: string,
+    userId: string,
+  ): Promise<NullableType<ProjectDto>> {
     const project = await this.findOne(id, userId)
 
     if (!project) {

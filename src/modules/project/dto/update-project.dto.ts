@@ -25,7 +25,7 @@ export class UpdateProjectDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  thumbnailUrl?: string
+  thumbnailId?: string
 
   @ApiProperty({ required: false })
   @IsBoolean()
