@@ -1,14 +1,8 @@
 import ms from 'ms'
 import * as crypto from 'crypto'
 import * as bcrypt from 'bcryptjs'
-import {
-  Injectable,
-  Inject,
-  forwardRef,
-  UnprocessableEntityException,
-  HttpStatus,
-  NotFoundException,
-} from '@nestjs/common'
+
+import { Injectable, Inject, forwardRef } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { UserService } from '@/modules/user/user.service'
 import { PrismaService } from '@/modules/prisma'
@@ -79,8 +73,7 @@ export class AuthService {
       .update(randomStringGenerator())
       .digest('hex')
 
-    const expires = new Date()
-    expires.setHours(expires.getHours() + 24) // Session expires in 24 hours
+    const expires = addHours(new Date(), 24)
 
     const session = await this.sessionService.create({
       userId: exisingUser.id,

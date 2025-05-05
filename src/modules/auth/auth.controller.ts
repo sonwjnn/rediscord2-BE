@@ -48,21 +48,19 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async register(@Body() createUserDto: AuthEmailRegisterDto): Promise<void> {
+  register(@Body() createUserDto: AuthEmailRegisterDto): Promise<void> {
     return this.authService.register(createUserDto)
   }
 
   @Post('email/confirm')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async confirmEmail(
-    @Body() confirmEmailDto: AuthConfirmEmailDto,
-  ): Promise<void> {
+  confirmEmail(@Body() confirmEmailDto: AuthConfirmEmailDto): Promise<void> {
     return this.authService.confirmEmail(confirmEmailDto.token)
   }
 
   @Post('email/confirm/resend')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async resendConfirmEmail(
+  resendConfirmEmail(
     @Body() confirmEmailDto: AuthConfirmEmailResendDto,
   ): Promise<void> {
     return this.authService.resendVerificationConfirmEmail(
@@ -72,7 +70,7 @@ export class AuthController {
 
   @Post('forgot/password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async forgotPassword(
+  forgotPassword(
     @Body() forgotPasswordDto: AuthForgotPasswordDto,
   ): Promise<void> {
     return this.authService.forgotPassword(forgotPasswordDto.email)
@@ -122,8 +120,8 @@ export class AuthController {
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.NO_CONTENT)
-  public async logout(@Request() request): Promise<void> {
-    await this.authService.logout({
+  public logout(@Request() request): Promise<void> {
+    return this.authService.logout({
       sessionId: request.user.sessionId,
     })
   }

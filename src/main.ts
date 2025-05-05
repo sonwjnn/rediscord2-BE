@@ -31,11 +31,6 @@ async function bootstrap() {
     },
   )
 
-  app.use(
-    bodyParser.raw({
-      type: 'application/json', // Use this for JSON requests
-    }),
-  )
   app.use((req, res, next) => {
     if (req.originalUrl === '/api/v1/payment/webhook') {
       bodyParser.raw({ type: 'application/json' })(req, res, err => {
