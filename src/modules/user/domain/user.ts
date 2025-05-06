@@ -2,7 +2,7 @@ import { Exclude, Expose } from 'class-transformer'
 import { ApiProperty } from '@nestjs/swagger'
 import { FileType } from '@/modules/files/domain/file'
 
-export class DomainUser {
+export class UserDto {
   @ApiProperty({
     type: String,
   })

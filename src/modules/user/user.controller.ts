@@ -19,7 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger'
 import { NullableType } from '@/utils/types/nullable.type'
-import { DomainUser } from './domain/user'
+import { UserDto } from './domain/user'
 import { UpdateUserDto } from './dto'
 
 @ApiBearerAuth()
@@ -33,7 +33,7 @@ export class UsersController {
   constructor(private readonly userService: UserService) {}
 
   @ApiOkResponse({
-    type: DomainUser,
+    type: UserDto,
   })
   @SerializeOptions({
     groups: ['admin'],
@@ -50,7 +50,7 @@ export class UsersController {
   }
 
   @ApiOkResponse({
-    type: DomainUser,
+    type: UserDto,
   })
   @SerializeOptions({
     groups: ['admin'],
@@ -67,7 +67,7 @@ export class UsersController {
   }
 
   @ApiOkResponse({
-    type: DomainUser,
+    type: UserDto,
   })
   @SerializeOptions({
     groups: ['admin'],

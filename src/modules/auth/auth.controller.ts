@@ -16,7 +16,7 @@ import { LoginResponseDto } from './dto/login-response.dto'
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto'
 import { AuthEmailRegisterDto } from './dto/auth-email-register.dto'
 import { AuthGuard } from '@nestjs/passport'
-import { DomainUser } from '@/modules/user/domain/user'
+import { UserDto } from '@/modules/user/domain/user'
 import { NullableType } from '@/utils/types/nullable.type'
 import { User } from '@prisma/client'
 import { RefreshResponseDto } from './dto/refresh-response.dto'
@@ -92,7 +92,7 @@ export class AuthController {
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({
-    type: DomainUser,
+    type: UserDto,
   })
   @HttpCode(HttpStatus.OK)
   public me(@Request() request): Promise<NullableType<User>> {
@@ -134,7 +134,7 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
-    type: DomainUser,
+    type: UserDto,
   })
   public update(
     @Request() request,

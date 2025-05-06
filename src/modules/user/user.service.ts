@@ -104,6 +104,9 @@ export class UserService {
   findById(id: User['id']): Promise<NullableType<User>> {
     return this.db.user.findUnique({
       where: { id },
+      include: {
+        image: true,
+      },
     })
   }
 

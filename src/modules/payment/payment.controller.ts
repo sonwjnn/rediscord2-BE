@@ -5,6 +5,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 import { AuthGuard } from '@nestjs/passport'
 import { ConfigService } from '@nestjs/config'
 import { ApiInternalServerException } from '@/utils/exception'
+import { SubscriptionResponseDto } from './dto/subscription-response.dto'
 
 @ApiTags('Payment')
 @Controller({
@@ -24,6 +25,24 @@ export class PaymentController {
     @Request() request,
   ): Promise<Stripe.Checkout.Session> {
     return this.paymentService.createCheckoutSession(request.user.id)
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Post('billing')
+  async createBilling(
+    @Request() request,
+  ): Promise<Stripe.BillingPortal.Session> {
+    return this.paymentService.createBilling(request.user.id)
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Post('subscription')
+  async currentSubscription(
+    @Request() request,
+  ): Promise<SubscriptionResponseDto> {
+    return this.paymentService.currentSubscription(request.user.id)
   }
 
   @Post('webhook')

@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config'
 import { UserService } from '@/modules/user/user.service'
 import { ApiBadRequestException, ApiNotFoundException } from '@/utils/exception'
 import { PrismaService } from '../prisma'
+import { checkIsActive } from '@/utils/check-is-active'
+import { SubscriptionResponseDto } from './dto/subscription-response.dto'
 
 @Injectable()
 export class PaymentService {
@@ -26,32 +28,66 @@ export class PaymentService {
       throw new ApiNotFoundException('userNotFound')
     }
 
-    try {
-      const session = await this.stripe.checkout.sessions.create({
-        success_url: `${this.configService.get('app.frontendDomain')}?success=1`,
-        cancel_url: `${this.configService.get('app.frontendDomain')}?cancel=1`,
-        payment_method_types: ['card'],
-        mode: 'subscription',
-        billing_address_collection: 'auto',
-        customer_email: user.email || '',
-        line_items: [
-          {
-            price: this.configService.get('payment.stripePriceId')!,
-            quantity: 1,
-          },
-        ],
-        metadata: {
-          userId: user.id,
+    const session = await this.stripe.checkout.sessions.create({
+      success_url: `${this.configService.get('app.frontendDomain')}?success=1`,
+      cancel_url: `${this.configService.get('app.frontendDomain')}?cancel=1`,
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      billing_address_collection: 'auto',
+      customer_email: user.email || '',
+      line_items: [
+        {
+          price: this.configService.get('payment.stripePriceId')!,
+          quantity: 1,
         },
-      })
+      ],
+      metadata: {
+        userId: user.id,
+      },
+    })
 
-      return session
-    } catch (error) {
-      console.error('Error creating session:', error)
-      throw new InternalServerErrorException(
-        'Failed to create checkout session',
-      )
+    return session
+  }
+
+  async createBilling(userId: string): Promise<Stripe.BillingPortal.Session> {
+    const user = await this.userService.findById(userId)
+
+    if (!user) {
+      throw new ApiNotFoundException('userNotFound')
     }
+
+    const subscription = await this.db.subscription.findFirst({
+      where: { userId },
+    })
+
+    if (!subscription) {
+      throw new ApiNotFoundException('subscriptionNotFound')
+    }
+
+    const session = await this.stripe.billingPortal.sessions.create({
+      customer: subscription.customerId,
+      return_url: `${this.configService.get('app.frontendDomain')}`,
+    })
+
+    if (!session || session.url) {
+      throw new InternalServerErrorException('failedToCreateBillingSession')
+    }
+
+    return session
+  }
+
+  async currentSubscription(userId: string): Promise<SubscriptionResponseDto> {
+    const subscription = await this.db.subscription.findFirst({
+      where: { userId },
+    })
+
+    if (!subscription) {
+      throw new ApiNotFoundException('subscriptionNotFound')
+    }
+
+    const active = checkIsActive(subscription)
+
+    return { ...subscription, active }
   }
 
   async handleWebhook(event: Stripe.Event) {
