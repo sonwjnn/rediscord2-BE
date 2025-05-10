@@ -63,13 +63,12 @@ export class PaymentService {
     if (!subscription) {
       throw new ApiNotFoundException('subscriptionNotFound')
     }
-
     const session = await this.stripe.billingPortal.sessions.create({
       customer: subscription.customerId,
       return_url: `${this.configService.get('app.frontendDomain')}`,
     })
 
-    if (!session || session.url) {
+    if (!session || !session.url) {
       throw new InternalServerErrorException('failedToCreateBillingSession')
     }
 

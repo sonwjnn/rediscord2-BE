@@ -13,6 +13,7 @@ import { FilesLocalService } from './files.service'
 
 import { AllConfigType } from '@/config/config.type'
 import { PrismaModule } from '@/modules/prisma'
+import { ApiUnprocessableEntityException } from '@/utils/exception'
 
 @Module({
   imports: [
@@ -25,12 +26,7 @@ import { PrismaModule } from '@/modules/prisma'
           fileFilter: (request, file, callback) => {
             if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
               return callback(
-                new UnprocessableEntityException({
-                  status: HttpStatus.UNPROCESSABLE_ENTITY,
-                  errors: {
-                    file: `cantUploadFileType`,
-                  },
-                }),
+                new ApiUnprocessableEntityException('cantUploadFileType'),
                 false,
               )
             }

@@ -8,11 +8,12 @@ import { MulterModule } from '@nestjs/platform-express'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util'
 import { S3Client } from '@aws-sdk/client-s3'
-import multerS3 from 'multer-s3'
+import multerS3, { AUTO_CONTENT_TYPE } from 'multer-s3'
 
 import { FilesS3Service } from './files.service'
 import { AllConfigType } from '@/config/config.type'
 import { PrismaModule } from '@/modules/prisma'
+import { ApiUnprocessableEntityException } from '@/utils/exception'
 
 @Module({
   imports: [
@@ -37,12 +38,7 @@ import { PrismaModule } from '@/modules/prisma'
           fileFilter: (request, file, callback) => {
             if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
               return callback(
-                new UnprocessableEntityException({
-                  status: HttpStatus.UNPROCESSABLE_ENTITY,
-                  errors: {
-                    file: `cantUploadFileType`,
-                  },
-                }),
+                new ApiUnprocessableEntityException('cantUploadFileType'),
                 false,
               )
             }
@@ -54,7 +50,7 @@ import { PrismaModule } from '@/modules/prisma'
             bucket: configService.getOrThrow('file.awsDefaultS3Bucket', {
               infer: true,
             }),
-            contentType: multerS3.AUTO_CONTENT_TYPE,
+            contentType: AUTO_CONTENT_TYPE,
             key: (request, file, callback) => {
               callback(
                 null,

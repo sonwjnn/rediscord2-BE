@@ -1,4 +1,11 @@
-import { Controller, Headers, Post, Request, UseGuards } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  Headers,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common'
 import { PaymentService } from './payment.service'
 import { Stripe } from 'stripe'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
@@ -38,7 +45,7 @@ export class PaymentController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Post('subscription')
+  @Get('subscription')
   async currentSubscription(
     @Request() request,
   ): Promise<SubscriptionResponseDto> {
