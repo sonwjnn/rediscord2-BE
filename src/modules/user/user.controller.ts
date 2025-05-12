@@ -45,7 +45,7 @@ export class UsersController {
     type: String,
     required: true,
   })
-  findOne(@Param('id') id: User['id']): Promise<NullableType<User>> {
+  findOne(@Param('id') id: User['id']): Promise<NullableType<UserDto>> {
     return this.userService.findById(id)
   }
 
@@ -62,7 +62,7 @@ export class UsersController {
     type: String,
     required: true,
   })
-  findByEmail(@Param('email') email: string): Promise<NullableType<User>> {
+  findByEmail(@Param('email') email: string): Promise<NullableType<UserDto>> {
     return this.userService.findByEmail(email)
   }
 

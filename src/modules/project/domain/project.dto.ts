@@ -1,6 +1,6 @@
 import { FileType } from '@/modules/files/domain/file'
 import { ApiProperty } from '@nestjs/swagger'
-import { Exclude } from 'class-transformer'
+import { Exclude, Expose } from 'class-transformer'
 
 export class ProjectDto {
   @ApiProperty()
@@ -22,12 +22,10 @@ export class ProjectDto {
   width: number
 
   @ApiProperty({
-    type: () => FileType,
+    type: String,
+    example: 'https://image_url.com',
   })
-  thumbnail?: FileType | null
-
-  @Exclude()
-  thumbnailId?: string | null
+  thumbnailUrl?: string | null
 
   @ApiProperty({ required: false, nullable: true })
   isTemplate: boolean | null

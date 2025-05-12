@@ -18,7 +18,6 @@ import { AuthEmailRegisterDto } from './dto/auth-email-register.dto'
 import { AuthGuard } from '@nestjs/passport'
 import { UserDto } from '@/modules/user/domain/user'
 import { NullableType } from '@/utils/types/nullable.type'
-import { User } from '@prisma/client'
 import { RefreshResponseDto } from './dto/refresh-response.dto'
 import { AuthUpdateDto } from './dto/auth-update.dto'
 import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto'
@@ -95,7 +94,7 @@ export class AuthController {
     type: UserDto,
   })
   @HttpCode(HttpStatus.OK)
-  public me(@Request() request): Promise<NullableType<User>> {
+  public me(@Request() request): Promise<NullableType<UserDto>> {
     return this.authService.me(request.user)
   }
 
@@ -139,7 +138,7 @@ export class AuthController {
   public update(
     @Request() request,
     @Body() userDto: AuthUpdateDto,
-  ): Promise<NullableType<User>> {
+  ): Promise<NullableType<UserDto>> {
     return this.authService.update(request.user, userDto)
   }
 }

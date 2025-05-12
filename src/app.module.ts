@@ -4,10 +4,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { AuthModule } from '@/modules/auth/auth.module'
 import { UserModule } from '@/modules/user/user.module'
 import { PrismaModule } from '@/modules/prisma/prisma.module'
+import { UnsplashModule } from '@/modules/unsplash/unsplash.module'
 import { MailModule } from '@/modules/mail/mail.module'
 import { MailerService } from '@/modules/mailer/mailer.service'
 import { MailerModule } from '@/modules/mailer/mailer.module'
 import { ProjectModule } from '@/modules/project/project.module'
+import { UserFilesModule } from '@/modules/user-files/user-files.module'
 
 import { HeaderResolver, I18nModule } from 'nestjs-i18n'
 import { AccountModule } from '@/modules/account/account.module'
@@ -21,6 +23,9 @@ import authConfig from '@/modules/auth/config/auth.config'
 import mailConfig from '@/modules/mail/config/mail.config'
 import paymentConfig from '@/modules/payment/config/payment.config'
 import fileConfig from '@/modules/files/config/file.config'
+import unsplashConfig from '@/modules/unsplash/config/unsplash.config'
+import replicateConfig from './modules/replicate/config/replicate.config'
+import { ReplicateModule } from './modules/replicate/replicate.module'
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,6 +37,8 @@ import fileConfig from '@/modules/files/config/file.config'
         googleConfig,
         paymentConfig,
         fileConfig,
+        unsplashConfig,
+        replicateConfig,
       ],
       envFilePath: ['.env'],
     }),
@@ -58,6 +65,9 @@ import fileConfig from '@/modules/files/config/file.config'
       imports: [ConfigModule],
       inject: [ConfigService],
     }),
+    UserFilesModule,
+    ReplicateModule,
+    UnsplashModule,
     AccountModule,
     AuthGoogleModule,
     AuthModule,

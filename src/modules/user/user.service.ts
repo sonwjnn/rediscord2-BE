@@ -6,13 +6,15 @@ import { CreateUserDto, UpdateUserDto } from './dto'
 import * as bcrypt from 'bcryptjs'
 import { NullableType } from '@/utils/types/nullable.type'
 import { ApiConflictException } from '@/utils/exception'
-import { FilesService } from '@/modules/files/files.service'
+import { ConfigService } from '@nestjs/config'
+import { getS3ImageUrl } from '@/utils/get-s3-image-url'
+import { UserDto } from './domain/user'
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly db: PrismaService,
-    private readonly filesService: FilesService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -101,13 +103,26 @@ export class UserService {
     })
   }
 
-  findById(id: User['id']): Promise<NullableType<User>> {
-    return this.db.user.findUnique({
+  async findById(id: User['id']): Promise<NullableType<UserDto>> {
+    const user = await this.db.user.findUnique({
       where: { id },
-      include: {
-        image: true,
-      },
     })
+
+    if (!user) {
+      return null
+    }
+
+    const userImage = await this.db.userFiles.findFirst({
+      where: { userId: user.id, fileType: 'PROFILE' },
+    })
+
+    return {
+      ...user,
+      imageUrl: getS3ImageUrl(
+        userImage?.path,
+        this.configService.get('file.awsDefaultS3Bucket'),
+      ),
+    }
   }
 
   findByIds(ids: User['id'][]): Promise<User[]> {
@@ -140,17 +155,17 @@ export class UserService {
       }
     }
 
-    let imageId: string | null | undefined = undefined
+    // let imageId: string | null | undefined = undefined
 
-    if (updateUserDto.imageId) {
-      const fileObject = await this.filesService.findById(updateUserDto.imageId)
-      if (!fileObject) {
-        throw new ApiUnprocessableEntityException('imageNotExists')
-      }
-      imageId = fileObject.id
-    } else if (updateUserDto.imageId === null) {
-      imageId = null
-    }
+    // if (updateUserDto.imageId) {
+    //   const fileObject = await this.filesService.findById(updateUserDto.imageId)
+    //   if (!fileObject) {
+    //     throw new ApiUnprocessableEntityException('imageNotExists')
+    //   }
+    //   imageId = fileObject.id
+    // } else if (updateUserDto.imageId === null) {
+    //   imageId = null
+    // }
 
     return this.db.user.update({
       where: { id },
@@ -158,7 +173,6 @@ export class UserService {
       // <updating-property-payload />
       data: {
         password: password,
-        imageId: updateUserDto.imageId,
         emailVerified: updateUserDto.emailVerified,
       },
     })

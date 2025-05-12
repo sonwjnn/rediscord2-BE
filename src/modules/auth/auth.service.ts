@@ -29,6 +29,7 @@ import {
 import { SocialInterface } from '@/modules/social/interfaces/social.interface'
 import { RefreshResponseDto } from './dto/refresh-response.dto'
 import { addHours, addMinutes, addSeconds } from 'date-fns'
+import { UserDto } from '../user/domain/user'
 @Injectable()
 export class AuthService {
   constructor(
@@ -99,7 +100,7 @@ export class AuthService {
     authProvider: string,
     socialData: SocialInterface,
   ): Promise<LoginResponseDto> {
-    let user: NullableType<User> = null
+    let user: NullableType<UserDto> = null
     const socialEmail = socialData.email?.toLowerCase()
     let userByEmail: NullableType<User> = null
 
@@ -204,14 +205,14 @@ export class AuthService {
     })
   }
 
-  async me(userJwtPayload: JwtPayloadType): Promise<NullableType<User>> {
+  me(userJwtPayload: JwtPayloadType): Promise<NullableType<UserDto>> {
     return this.userService.findById(userJwtPayload.id)
   }
 
   async update(
     userJwtPayload: JwtPayloadType,
     userDto: AuthUpdateDto,
-  ): Promise<NullableType<User>> {
+  ): Promise<NullableType<UserDto>> {
     const currentUser = await this.userService.findById(userJwtPayload.id)
 
     if (!currentUser) {

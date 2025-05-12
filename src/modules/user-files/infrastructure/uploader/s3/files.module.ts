@@ -1,20 +1,16 @@
-import {
-  HttpStatus,
-  Module,
-  UnprocessableEntityException,
-} from '@nestjs/common'
-import { FilesS3PresignedController } from './files.controller'
+import { Module } from '@nestjs/common'
+import { UserFilesS3Controller } from './files.controller'
 import { MulterModule } from '@nestjs/platform-express'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util'
 import { S3Client } from '@aws-sdk/client-s3'
 import multerS3, { AUTO_CONTENT_TYPE } from 'multer-s3'
 
-import { FilesS3PresignedService } from './files.service'
-
+import { UserFilesS3Service } from './files.service'
 import { AllConfigType } from '@/config/config.type'
 import { PrismaModule } from '@/modules/prisma'
 import { ApiUnprocessableEntityException } from '@/utils/exception'
+import { UserFilesService } from '@/modules/user-files/user-files.service'
 
 @Module({
   imports: [
@@ -48,8 +44,9 @@ import { ApiUnprocessableEntityException } from '@/utils/exception'
           },
           storage: multerS3({
             s3: s3,
-            bucket: '',
-            acl: 'public-read',
+            bucket: configService.getOrThrow('file.awsDefaultS3Bucket', {
+              infer: true,
+            }),
             contentType: AUTO_CONTENT_TYPE,
             key: (request, file, callback) => {
               callback(
@@ -68,8 +65,8 @@ import { ApiUnprocessableEntityException } from '@/utils/exception'
       },
     }),
   ],
-  controllers: [FilesS3PresignedController],
-  providers: [ConfigModule, ConfigService, FilesS3PresignedService],
-  exports: [FilesS3PresignedService],
+  controllers: [UserFilesS3Controller],
+  providers: [UserFilesS3Service, UserFilesService],
+  exports: [UserFilesS3Service],
 })
-export class FilesS3PresignedModule {}
+export class UserFilesS3Module {}

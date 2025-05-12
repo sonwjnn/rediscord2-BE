@@ -35,13 +35,11 @@ export class UserDto {
   @Exclude({ toPlainOnly: true })
   password?: string | null
 
-  @Exclude()
-  imageId?: string | null
-
   @ApiProperty({
-    type: () => FileType,
+    type: String,
+    example: 'https://image_url.com',
   })
-  image?: FileType | null
+  imageUrl?: string | null
 
   @ApiProperty({
     type: Boolean,
