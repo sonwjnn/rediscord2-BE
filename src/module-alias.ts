@@ -1,9 +1,16 @@
-import { addAliases } from 'module-alias'
-import { join } from 'path'
+/**
+ * Register module aliases for path resolution
+ */
+import moduleAlias from 'module-alias'
+import * as path from 'path'
 
-const baseDir =
-  process.env.NODE_ENV === 'production' ? join(__dirname, '..') : __dirname
+// Different path resolution for development and production (Vercel)
+const rootDir =
+  process.env.NODE_ENV === 'production'
+    ? '/var/task'
+    : path.resolve(__dirname, '..')
 
-addAliases({
-  '@': baseDir,
+// Register the module aliases
+moduleAlias.addAliases({
+  '@': rootDir,
 })
