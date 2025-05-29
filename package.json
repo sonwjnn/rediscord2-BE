@@ -9,7 +9,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "prisma generate --schema=src/db/schema.prisma && nest build",
+    "build": "nest build && tsc-alias",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -24,7 +24,8 @@
     "db:generate": "prisma generate --schema=src/db/schema.prisma",
     "db:migrate": "prisma migrate reset --schema=src/db/schema.prisma",
     "db:studio": "prisma studio --schema=src/db/schema.prisma",
-    "db:push": "prisma db push --schema=src/db/schema.prisma"
+    "db:push": "prisma db push --schema=src/db/schema.prisma",
+    "vercel-build": "prisma generate --schema=src/db/schema.prisma && nest build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.802.0",
@@ -40,6 +41,7 @@
     "@types/bcryptjs": "^3.0.0",
     "@types/passport-local": "1.0.38",
     "@types/uuid": "^10.0.0",
+    "@vendia/serverless-express": "^4.10.4",
     "axios": "^1.9.0",
     "axios-retry": "^4.5.0",
     "bcryptjs": "3.0.2",
@@ -48,6 +50,7 @@
     "date-fns": "^4.1.0",
     "google-auth-library": "^9.15.1",
     "handlebars": "^4.7.8",
+    "module-alias": "^2.2.3",
     "multer-s3": "^3.0.1",
     "nestjs-i18n": "^10.5.1",
     "nodemailer": "^6.10.1",
@@ -72,6 +75,7 @@
     "@swc/core": "1.11.13",
     "@types/express": "5.0.1",
     "@types/jest": "29.5.14",
+    "@types/module-alias": "^2.0.4",
     "@types/multer-s3": "^3.0.3",
     "@types/node": "22.13.14",
     "@types/supertest": "6.0.3",
@@ -86,7 +90,7 @@
     "ts-jest": "29.3.0",
     "ts-loader": "9.5.2",
     "ts-node": "10.9.2",
-    "tsconfig-paths": "4.2.0",
+    "tsc-alias": "^1.8.16",
     "typescript": "5.8.2",
     "typescript-eslint": "8.28.0"
   },
@@ -106,5 +110,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "_moduleAliases": {
+    "@": "dist"
   }
 }
