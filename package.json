@@ -112,6 +112,6 @@
     "testEnvironment": "node"
   },
   "_moduleAliases": {
-    "@": "dist"
+    "@": "dist/src"
   }
 }
