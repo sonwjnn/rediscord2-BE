@@ -25,7 +25,7 @@
     "db:migrate": "prisma migrate reset --schema=src/db/schema.prisma",
     "db:studio": "prisma studio --schema=src/db/schema.prisma",
     "db:push": "prisma db push --schema=src/db/schema.prisma",
-    "vercel-build": "prisma generate --schema=src/db/schema.prisma && nest build && tsc-alias"
+    "vercel-build": "prisma generate --schema=src/db/schema.prisma && nest build && tsc-alias && echo \"NESTJS_API_ENV=production\" >> .env.production"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.802.0",
